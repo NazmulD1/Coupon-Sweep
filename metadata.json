@@ -1,0 +1,6 @@
+{
+  "name": "CouponSweep — Digital Coupon Loader",
+  "description": "Package, customize, test, and download CouponSweep, the ultimate independent Digital Coupon Loader Chrome Extension (Manifest V3) for automated clipping.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
