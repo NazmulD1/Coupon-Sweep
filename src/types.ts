@@ -1,4 +1,4 @@
-export type RetailerId = 'shoprite' | 'walgreens' | 'familydollar' | 'cvs' | 'kroger';
+export type RetailerId = 'shoprite' | 'walgreens' | 'familydollar' | 'cvs' | 'kroger' | 'publix';
 
 export interface ExtensionConfig {
   clickDelay: number; // ms after click
@@ -15,6 +15,7 @@ export interface ExtensionConfig {
   familydollarTargetUrl?: string; // Family Dollar Smart Coupons destination URL
   cvsTargetUrl?: string; // CVS ExtraCare destination URL
   krogerTargetUrl?: string; // Kroger destination URL
+  publixTargetUrl?: string; // Publix Digital Coupons destination URL
   activeRetailer?: RetailerId; // Active or preferred retailer
   storeRsid?: string; // ShopRite store number ID (e.g. '521', '218')
   clippingStrategy: 'instant' | 'individual'; // 'instant' = 1-click batch clip; 'individual' = scrolls & clicks one-by-one

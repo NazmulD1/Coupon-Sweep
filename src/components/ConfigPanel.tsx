@@ -319,7 +319,7 @@ export function ConfigPanel({ config, onChange, onReset }: ConfigPanelProps) {
               <span>Override Retailer Login Check (Bypass Loyalty Guard)</span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Forces coupon clipping to start immediately without checking or pausing for loyalty account sign-in (useful on Walgreens, ShopRite, or Kroger if session detection reports false positives).
+              Forces coupon clipping to start immediately without checking or pausing for loyalty account sign-in (useful on Publix, Walgreens, ShopRite, or Kroger if session detection reports false positives).
             </p>
           </div>
         </label>

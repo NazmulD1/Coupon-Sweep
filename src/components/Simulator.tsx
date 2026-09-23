@@ -6,21 +6,86 @@ import { CouponItem, ExtensionConfig, RetailerId } from '../types';
 const SHOPRITE_COUPONS: CouponItem[] = [
   {
     id: 'sr1',
-    brand: "Nature's Path",
-    title: "Save $1.00 When you Buy ONE (1) Nature's Path Love Crunch Organic Granola 11.5-oz. bag...",
-    discount: 'Save $1.00',
-    category: 'Breakfast & Cereal',
-    expiration: 'Expires: 09/19/2026 - 7 days left',
+    brand: 'Crest',
+    title: 'Save $2.00 on ONE Crest Toothpaste 2.4 oz or more (excludes Crest Cavity, Bakin...',
+    discount: 'Save $2.00',
+    category: 'Personal Care',
+    expiration: 'Expires: 09/26/2026 - 4 days left',
     buttonLabel: 'Load Coupon',
     isClipped: false,
-    imageColor: '#78350f',
-    badges: ['New'],
+    imageColor: '#0284c7',
+    badges: ['New', 'Limit 4'],
     retailer: 'shoprite'
   },
   {
     id: 'sr2',
+    brand: 'Herbal Essences',
+    title: 'Save $5.00 on TWO Herbal Essences Pure Plant Essences Shampoo, Conditioner...',
+    discount: 'Save $5.00',
+    category: 'Hair Care',
+    expiration: 'Expires: 09/26/2026 - 4 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#059669',
+    badges: ['Top Deal', 'Weekly Ad'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr3',
+    brand: "Harry's Plus",
+    title: "Save $2.00 on ONE Harry's Plus Razor Handle Pack (Select varieties)...",
+    discount: 'Save $2.00',
+    category: 'Personal Care',
+    expiration: 'Expires: 10/03/2026 - 11 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#ea580c',
+    badges: ['New'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr4',
+    brand: "L'ORÉAL PARIS",
+    title: "Save $3.00 on TWO L'Oréal Paris Elvive haircare or Advanced Hairstyle products...",
+    discount: 'Save $3.00',
+    category: 'Hair Care',
+    expiration: 'Expires: 09/29/2026 - 7 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#dc2626',
+    badges: ['Weekly Ad', 'Limit 4'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr5',
+    brand: 'AVEENO Baby',
+    title: 'Save $2.00 on any ONE (1) AVEENO Baby or AVEENO Kids product (excludes travel/trial)...',
+    discount: 'Save $2.00',
+    category: 'Baby Care',
+    expiration: 'Expires: 10/05/2026 - 13 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#d97706',
+    badges: ['New'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr6',
+    brand: 'Blue Buffalo',
+    title: 'Save $1.00 on any ONE (1) Blue Buffalo Dog Food Dry or Wet or Treats...',
+    discount: 'Save $1.00',
+    category: 'Pet Care',
+    expiration: 'Expires: 09/28/2026 - 6 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#2563eb',
+    badges: ['Weekly Ad'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr7',
     brand: 'The Pink Stuff',
-    title: 'Save $1.00 When you Buy ONE (1) The Pink Stuff Foaming Toilet Cleaner 2-Pack - *Redeem u...',
+    title: 'Save $1.00 When you Buy ONE (1) The Pink Stuff Foaming Toilet Cleaner 2-Pack...',
     discount: 'Save $1.00',
     category: 'Cleaning',
     expiration: 'Expires: 09/26/2026',
@@ -31,78 +96,13 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr3',
-    brand: 'The Pink Stuff',
-    title: 'Save $1.00 on The Pink Stuff All Purpose Floor Cleaner When you Buy ONE (1) The Pink Stu...',
-    discount: 'Save $1.00',
-    category: 'Cleaning',
-    expiration: 'Expires: 09/26/2026',
-    buttonLabel: 'Load Coupon',
-    isClipped: false,
-    imageColor: '#ec4899',
-    badges: ['New', 'Limit 4'],
-    retailer: 'shoprite'
-  },
-  {
-    id: 'sr4',
-    brand: 'Colgate',
-    title: 'Save $3.00 on Colgate Toothpaste When you Buy TWO (2) Select Colgate Total, Optic White...',
-    discount: 'Save $3.00',
-    category: 'Personal Care',
-    expiration: 'Expires: 09/22/2026',
-    buttonLabel: 'Clip Coupon',
-    isClipped: false,
-    imageColor: '#dc2626',
-    badges: ['New', 'Weekly Ad', 'Limit 4'],
-    retailer: 'shoprite'
-  },
-  {
-    id: 'sr5',
-    brand: 'TheraBreath',
-    title: 'Save $2.00 on TheraBreath Toothpaste When you Buy ONE (1) TheraBreath Fresh Breath 4.0oz...',
-    discount: 'Save $2.00',
-    category: 'Personal Care',
-    expiration: 'Expires: 09/28/2026',
-    buttonLabel: 'Load Coupon',
-    isClipped: false,
-    imageColor: '#16a34a',
-    badges: ['New', 'Weekly Ad', 'Limit 4'],
-    retailer: 'shoprite'
-  },
-  {
-    id: 'sr6',
-    brand: 'Always',
-    title: 'Save $1.00 on Always Pads When you Buy ONE (1) Always Ultra Thin or Maxi Pads 14-48ct...',
-    discount: 'Save $1.00',
-    category: 'Personal Care',
-    expiration: 'Expires: 09/25/2026',
-    buttonLabel: 'Clip Coupon',
-    isClipped: false,
-    imageColor: '#2563eb',
-    badges: ['Weekly Ad'],
-    retailer: 'shoprite'
-  },
-  {
-    id: 'sr7',
-    brand: 'General Mills',
-    title: 'Save $1.50 When you Buy TWO (2) Boxes of Cheerios, Cinnamon Toast Crunch, or Lucky Charms...',
-    discount: 'Save $1.50',
-    category: 'Breakfast & Cereal',
-    expiration: 'Expires: 09/30/2026',
-    buttonLabel: 'Add to Card',
-    isClipped: false,
-    imageColor: '#f59e0b',
-    badges: ['Limit 4'],
-    retailer: 'shoprite'
-  },
-  {
     id: 'sr8',
     brand: 'Tide',
     title: 'Save $3.00 on Tide PODS Laundry Detergent 42ct or Liquid Detergent 92oz...',
     discount: 'Save $3.00',
     category: 'Household & Laundry',
     expiration: 'Expires: 09/29/2026',
-    buttonLabel: 'Clip',
+    buttonLabel: 'Load Coupon',
     isClipped: false,
     imageColor: '#0284c7',
     badges: ['Limit 4'],
@@ -525,30 +525,138 @@ const KROGER_COUPONS: CouponItem[] = [
   }
 ];
 
+const PUBLIX_COUPONS: CouponItem[] = [
+  {
+    id: 'pub1',
+    brand: 'Chobani',
+    title: 'Save $1.00 on any ONE (1) Chobani® Greek Yogurt 4-Pack or Zero Sugar 4-Pack (Select Varieties)',
+    discount: 'Save $1.00',
+    category: 'Dairy & Refrigerated',
+    expiration: 'Exp. 10/12/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#007a3d',
+    badges: ['Digital Coupon', 'Club Publix'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub2',
+    brand: 'GreenWise',
+    title: 'Save $1.50 on ONE (1) GreenWise Organic Extra Virgin Olive Oil 16.9 oz bottle',
+    discount: 'Save $1.50',
+    category: 'Pantry & Oils',
+    expiration: 'Exp. 10/15/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#15803d',
+    badges: ['GreenWise', 'Club Publix'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub3',
+    brand: 'Tide',
+    title: 'Save $3.00 on any ONE (1) Tide Liquid Laundry Detergent 92 oz or Tide PODS 32-42 ct',
+    discount: 'Save $3.00',
+    category: 'Household Essentials',
+    expiration: 'Exp. 10/08/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#ea580c',
+    badges: ['Club Publix', 'Popular'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub4',
+    brand: 'Publix Deli',
+    title: 'Save $2.00 on any Whole Publix Deli Sub or Wrap (Freshly Made to Order)',
+    discount: 'Save $2.00',
+    category: 'Deli & Prepared',
+    expiration: 'Exp. 10/20/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#047857',
+    badges: ['Publix Perks', 'Deli Favorite'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub5',
+    brand: 'Starbucks',
+    title: 'Save $2.50 on any TWO (2) Starbucks® Packaged Coffee 11-12 oz or K-Cup® Pods 10-12 ct',
+    discount: 'Save $2.50',
+    category: 'Beverages & Coffee',
+    expiration: 'Exp. 10/18/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#065f46',
+    badges: ['Club Publix'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub6',
+    brand: 'General Mills',
+    title: 'Save $1.00 on TWO (2) General Mills Cereals (Cheerios, Honey Nut Cheerios, Cinnamon Toast Crunch)',
+    discount: 'Save $1.00',
+    category: 'Breakfast & Cereal',
+    expiration: 'Exp. 10/22/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#d97706',
+    badges: ['Digital Coupon'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub7',
+    brand: "Boar's Head",
+    title: "Save $1.50 on 1 lb or more of Boar's Head Ovengold Turkey Breast or Sweet Slice Ham",
+    discount: 'Save $1.50',
+    category: 'Deli & Prepared',
+    expiration: 'Exp. 10/25/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#b91c1c',
+    badges: ['Premium Deli'],
+    retailer: 'publix'
+  },
+  {
+    id: 'pub8',
+    brand: 'Bounty',
+    title: 'Save $2.00 on any ONE (1) Bounty Paper Towels 6 Double Rolls or larger',
+    discount: 'Save $2.00',
+    category: 'Household Essentials',
+    expiration: 'Exp. 10/14/2026',
+    buttonLabel: 'Clip coupon',
+    isClipped: false,
+    imageColor: '#0284c7',
+    badges: ['Club Publix'],
+    retailer: 'publix'
+  }
+];
+
 interface SimulatorProps {
   config: ExtensionConfig;
 }
 
 export function Simulator({ config }: SimulatorProps) {
-  const [selectedRetailer, setSelectedRetailer] = useState<RetailerId>(config.activeRetailer || 'shoprite');
+  const [selectedRetailer, setSelectedRetailer] = useState<RetailerId>(config.activeRetailer || 'publix');
   const [shopriteCoupons, setShopriteCoupons] = useState<CouponItem[]>(SHOPRITE_COUPONS);
   const [walgreensCoupons, setWalgreensCoupons] = useState<CouponItem[]>(WALGREENS_COUPONS);
   const [familydollarCoupons, setFamilydollarCoupons] = useState<CouponItem[]>(FAMILYDOLLAR_COUPONS);
   const [cvsCoupons, setCvsCoupons] = useState<CouponItem[]>(CVS_COUPONS);
   const [krogerCoupons, setKrogerCoupons] = useState<CouponItem[]>(KROGER_COUPONS);
+  const [publixCoupons, setPublixCoupons] = useState<CouponItem[]>(PUBLIX_COUPONS);
   
-  const coupons = selectedRetailer === 'shoprite' ? shopriteCoupons : selectedRetailer === 'walgreens' ? walgreensCoupons : selectedRetailer === 'cvs' ? cvsCoupons : selectedRetailer === 'kroger' ? krogerCoupons : familydollarCoupons;
-  const setCoupons = selectedRetailer === 'shoprite' ? setShopriteCoupons : selectedRetailer === 'walgreens' ? setWalgreensCoupons : selectedRetailer === 'cvs' ? setCvsCoupons : selectedRetailer === 'kroger' ? setKrogerCoupons : setFamilydollarCoupons;
+  const coupons = selectedRetailer === 'publix' ? publixCoupons : selectedRetailer === 'shoprite' ? shopriteCoupons : selectedRetailer === 'walgreens' ? walgreensCoupons : selectedRetailer === 'cvs' ? cvsCoupons : selectedRetailer === 'kroger' ? krogerCoupons : familydollarCoupons;
+  const setCoupons = selectedRetailer === 'publix' ? setPublixCoupons : selectedRetailer === 'shoprite' ? setShopriteCoupons : selectedRetailer === 'walgreens' ? setWalgreensCoupons : selectedRetailer === 'cvs' ? setCvsCoupons : selectedRetailer === 'kroger' ? setKrogerCoupons : setFamilydollarCoupons;
 
   const [isGuest, setIsGuest] = useState(false);
   const [isNestedWindow, setIsNestedWindow] = useState(true);
-  const [activeFilter, setActiveFilter] = useState(selectedRetailer === 'shoprite' ? 'All Coupons - (254)' : 'All Offers (186)');
+  const [activeFilter, setActiveFilter] = useState(selectedRetailer === 'publix' ? 'All Coupons (284)' : (selectedRetailer === 'shoprite' ? 'All Coupons - (254)' : 'All Offers (186)'));
   const [isRunning, setIsRunning] = useState(false);
   const [clippedCount, setClippedCount] = useState(0);
   const [currentActionText, setCurrentActionText] = useState('Ready for 1-click execution');
   const [logs, setLogs] = useState<string[]>([
-    `Target: ${selectedRetailer === 'shoprite' ? (config.shopriteTargetUrl || config.targetUrl) : (config.walgreensTargetUrl || 'https://www.walgreens.com/offers/offers.jsp')}`,
-    `Simulator initialized for ${selectedRetailer === 'shoprite' ? 'ShopRite (Price Plus®)' : 'Walgreens (myWalgreens™)'}.`
+    `Target: ${selectedRetailer === 'publix' ? (config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons') : (selectedRetailer === 'shoprite' ? (config.shopriteTargetUrl || config.targetUrl) : (config.walgreensTargetUrl || 'https://www.walgreens.com/offers/offers.jsp'))}`,
+    `Simulator initialized for ${selectedRetailer === 'publix' ? 'Publix (Club Publix)' : (selectedRetailer === 'shoprite' ? 'ShopRite (Price Plus®)' : 'Walgreens (myWalgreens™)')}.`
   ]);
   const [completionNotice, setCompletionNotice] = useState<{ count: number; stopped: boolean; isAllLoaded?: boolean; retailer?: RetailerId } | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -566,9 +674,21 @@ export function Simulator({ config }: SimulatorProps) {
   }, [config.clippingStrategy]);
 
   useEffect(() => {
-    setActiveFilter(selectedRetailer === 'shoprite' ? 'All Coupons - (254)' : (selectedRetailer === 'walgreens' ? 'All Offers (186)' : (selectedRetailer === 'cvs' ? 'All (162)' : (selectedRetailer === 'kroger' ? 'All Coupons (302)' : 'Smart Coupons (120)'))));
+    setActiveFilter(
+      selectedRetailer === 'publix' ? 'All Coupons (284)' :
+      selectedRetailer === 'shoprite' ? 'All Coupons - (254)' :
+      selectedRetailer === 'walgreens' ? 'All Offers (186)' :
+      selectedRetailer === 'cvs' ? 'All (162)' :
+      selectedRetailer === 'kroger' ? 'All Coupons (302)' : 'Smart Coupons (120)'
+    );
     setLogs(prev => [
-      `[${new Date().toLocaleTimeString()}] Switched view to ${selectedRetailer === 'shoprite' ? 'ShopRite (Price Plus®)' : (selectedRetailer === 'walgreens' ? 'Walgreens (myWalgreens™)' : (selectedRetailer === 'cvs' ? 'CVS (ExtraCare®)' : (selectedRetailer === 'kroger' ? "Kroger (Shopper's Card)" : 'Family Dollar (Smart Coupons)')))}`,
+      `[${new Date().toLocaleTimeString()}] Switched view to ${
+        selectedRetailer === 'publix' ? 'Publix (Club Publix)' :
+        selectedRetailer === 'shoprite' ? 'ShopRite (Price Plus®)' :
+        selectedRetailer === 'walgreens' ? 'Walgreens (myWalgreens™)' :
+        selectedRetailer === 'cvs' ? 'CVS (ExtraCare®)' :
+        selectedRetailer === 'kroger' ? "Kroger (Shopper's Card)" : 'Family Dollar (Smart Coupons)'
+      }`,
       ...prev.slice(0, 48)
     ]);
   }, [selectedRetailer]);
@@ -617,7 +737,7 @@ export function Simulator({ config }: SimulatorProps) {
     setCoupons(prev => prev.map(c => ({ ...c, isClipped: false })));
     setClippedCount(0);
     setCurrentActionText('All coupons unclipped (Ready to test loading)');
-    addLog(`↩️ Unclipped ALL ${selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons for testing.`);
+    addLog(`↩️ Unclipped ALL ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons for testing.`);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.querySelectorAll('[data-cs-processed]').forEach(el => {
         el.removeAttribute('data-cs-processed');
@@ -631,14 +751,16 @@ export function Simulator({ config }: SimulatorProps) {
     setCoupons(prev => prev.map(c => ({ ...c, isClipped: true })));
     setClippedCount(coupons.length);
     setCurrentActionText(`All ${coupons.length} coupons marked as loaded`);
-    addLog(`✓ Marked all ${coupons.length} coupons as loaded on ${selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))}.`);
+    addLog(`✓ Marked all ${coupons.length} coupons as loaded on ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))}.`);
   };
 
   const handleReset = () => {
     abortControllerRef.current = true;
     setIsRunning(false);
     setCompletionNotice(null);
-    if (selectedRetailer === 'shoprite') {
+    if (selectedRetailer === 'publix') {
+      setPublixCoupons(PUBLIX_COUPONS);
+    } else if (selectedRetailer === 'shoprite') {
       setShopriteCoupons(SHOPRITE_COUPONS);
     } else if (selectedRetailer === 'cvs') {
       setCvsCoupons(CVS_COUPONS);
@@ -651,7 +773,7 @@ export function Simulator({ config }: SimulatorProps) {
     }
     setClippedCount(0);
     setCurrentActionText('Reset complete');
-    addLog(`Reset all ${selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons in sandbox to default state.`);
+    addLog(`Reset all ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons in sandbox to default state.`);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.querySelectorAll('[data-cs-processed]').forEach(el => {
         el.removeAttribute('data-cs-processed');
@@ -668,9 +790,11 @@ export function Simulator({ config }: SimulatorProps) {
     setIsRunning(true);
     abortControllerRef.current = false;
 
-    const rName = selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens')));
-    const pName = selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™')));
-    const destinationUrl = selectedRetailer === 'shoprite'
+    const rName = selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens')));
+    const pName = selectedRetailer === 'publix' ? 'Club Publix' : selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™')));
+    const destinationUrl = selectedRetailer === 'publix'
+      ? (config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons')
+      : selectedRetailer === 'shoprite'
       ? (config.shopriteTargetUrl || config.targetUrl)
       : (selectedRetailer === 'cvs' ? (config.cvsTargetUrl || 'https://www.cvs.com/extracare/home') : (selectedRetailer === 'familydollar' ? (config.familydollarTargetUrl || 'https://www.familydollar.com/smart-coupons') : (selectedRetailer === 'kroger' ? (config.krogerTargetUrl || 'https://www.kroger.com/savings/cl/coupons/') : (config.walgreensTargetUrl || 'https://www.walgreens.com/offers/offers.jsp?ban=dl_dlsp_MegaMenu_Coupons'))));
 
@@ -899,7 +1023,7 @@ export function Simulator({ config }: SimulatorProps) {
             <div className="flex items-center gap-2">
               <h3 className="text-white font-bold text-sm">CouponSweep Multi-Retailer Engine</h3>
               <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded font-mono">
-                ShopRite & Walgreens
+                Publix, ShopRite, Walgreens &amp; More
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -909,7 +1033,19 @@ export function Simulator({ config }: SimulatorProps) {
         </div>
 
         {/* Retailer Switcher Tabs */}
-        <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+        <div className="flex flex-wrap items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+          <button
+            id="tab-select-publix"
+            onClick={() => setSelectedRetailer('publix')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              selectedRetailer === 'publix'
+                ? 'bg-slate-800 text-white shadow-sm border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className="w-3.5 h-3.5 rounded-full bg-[#007a3d] text-white flex items-center justify-center text-[9px] font-black leading-none">P</div>
+            <span>Publix (Club Publix)</span>
+          </button>
           <button
             id="tab-select-shoprite"
             onClick={() => setSelectedRetailer('shoprite')}
@@ -935,6 +1071,30 @@ export function Simulator({ config }: SimulatorProps) {
             <span>Walgreens (myWalgreens™)</span>
           </button>
           <button
+            id="tab-select-cvs"
+            onClick={() => setSelectedRetailer('cvs')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              selectedRetailer === 'cvs'
+                ? 'bg-slate-800 text-white shadow-sm border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Store className="w-3.5 h-3.5 text-red-500" />
+            <span>CVS (ExtraCare®)</span>
+          </button>
+          <button
+            id="tab-select-kroger"
+            onClick={() => setSelectedRetailer('kroger')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              selectedRetailer === 'kroger'
+                ? 'bg-slate-800 text-white shadow-sm border border-slate-700'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-blue-600" />
+            <span>Kroger</span>
+          </button>
+          <button
             id="tab-select-familydollar"
             onClick={() => setSelectedRetailer('familydollar')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -944,7 +1104,7 @@ export function Simulator({ config }: SimulatorProps) {
             }`}
           >
             <Tag className="w-3.5 h-3.5 text-red-600" />
-            <span>Family Dollar (Smart Coupons)</span>
+            <span>Family Dollar</span>
           </button>
         </div>
 
@@ -1037,12 +1197,12 @@ export function Simulator({ config }: SimulatorProps) {
       <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <User className="w-4 h-4 text-slate-400" />
-          <span className="text-slate-300 font-semibold">Account State on {selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : 'Walgreens'))}:</span>
+          <span className="text-slate-300 font-semibold">Account State on {selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens')))}:</span>
           <span className="text-slate-400">
             {isGuest ? (
-              <span className="text-amber-400 font-semibold">"Hi Guest" (Buttons show "{selectedRetailer === 'shoprite' ? 'Login to Load' : (selectedRetailer === 'cvs' ? 'Sign in to send' : 'Sign in to clip')}")</span>
+              <span className="text-amber-400 font-semibold">"Hi Guest" (Buttons show "{selectedRetailer === 'publix' ? 'Clip coupon' : selectedRetailer === 'shoprite' ? 'Login to Load' : (selectedRetailer === 'cvs' ? 'Sign in to send' : 'Sign in to clip')}")</span>
             ) : (
-              <span className="text-emerald-400 font-semibold">"Signed In" ({selectedRetailer === 'shoprite' ? 'Price Plus #4892' : (selectedRetailer === 'cvs' ? 'ExtraCare #7109' : 'myWalgreens #9104')})</span>
+              <span className="text-emerald-400 font-semibold">"Signed In" ({selectedRetailer === 'publix' ? 'Club Publix #8241' : selectedRetailer === 'shoprite' ? 'Price Plus #4892' : (selectedRetailer === 'cvs' ? 'ExtraCare #7109' : 'myWalgreens #9104')})</span>
             )}
           </span>
         </div>
@@ -1075,7 +1235,109 @@ export function Simulator({ config }: SimulatorProps) {
 
       {/* Simulated Retailer Webpage */}
       <div className="bg-white text-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-300">
-        {selectedRetailer === 'shoprite' ? (
+        {selectedRetailer === 'publix' ? (
+          /* ================= PUBLIX HEADER ================= */
+          <>
+            <div className="border-b border-emerald-800 px-5 py-2.5 flex items-center justify-between text-xs text-white bg-[#007a3d] font-medium">
+              <div className="flex items-center gap-4">
+                <span className="font-bold text-white uppercase tracking-wider text-[11px]">Savings: Digital Coupons</span>
+                <span className="font-medium text-emerald-100 hidden sm:inline text-[11px]">Weekly Ad</span>
+                <span className="font-medium text-emerald-100 hidden sm:inline text-[11px]">BOGOs</span>
+                <span className="font-medium text-emerald-100 hidden md:inline text-[11px]">Delivery &amp; Curbside</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="bg-[#005a2d] text-emerald-100 px-2.5 py-0.5 rounded text-[11px] font-bold">
+                  Club Publix Member Savings
+                </span>
+              </div>
+            </div>
+
+            <div className="px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-[#007a3d] text-white flex items-center justify-center font-black text-2xl shadow-sm tracking-tight">
+                  P
+                </div>
+                <div>
+                  <div className="font-black text-[#007a3d] text-2xl tracking-tight leading-none">
+                    Publix.
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                    Digital Coupons
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 max-w-lg hidden sm:block">
+                <input
+                  type="text"
+                  readOnly
+                  value="Search all Publix digital coupons..."
+                  className="w-full bg-slate-100 border border-slate-300 rounded-full py-2 px-4 text-xs text-slate-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50">
+                  <Store className="w-4 h-4 text-slate-600" />
+                  <div>
+                    <div className="text-[10px] text-slate-500 font-medium">Your Store</div>
+                    <div className="font-bold text-slate-800">
+                      Store #1452 (Sunny Isles)
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50">
+                  <User className="w-4 h-4 text-slate-600" />
+                  <div>
+                    <div className="text-[10px] text-slate-500">
+                      {isGuest ? 'Hi Guest' : 'Hi, Mark'}
+                    </div>
+                    <div className="font-bold text-[#007a3d] text-xs sm:text-sm">
+                      {isGuest ? (
+                        <span 
+                          id="publixLoginBtn"
+                          data-qa="login"
+                          className="cursor-pointer hover:underline inline-flex items-center gap-1 font-bold text-[#007a3d]"
+                          onClick={() => setShowLoginModal(true)}
+                          title="Click to view login requirement"
+                        >
+                          Log In / Sign Up
+                        </span>
+                      ) : (
+                        <span className="cursor-pointer" onClick={() => setIsGuest(true)} title="Click to simulate signing out">
+                          Club Publix Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="py-6 px-5 text-center bg-emerald-50/50 border-b border-slate-200">
+              <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">284 Digital Coupons</div>
+              <div className="text-xs font-semibold text-[#007a3d] uppercase tracking-wider mt-1">
+                Save over $400 on groceries with Club Publix digital coupons
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {['All Coupons (284)', 'BOGO Savings', 'Produce & Deli', 'Pantry & Grocery', 'Frozen & Dairy', 'Household'].map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                      activeFilter === filter
+                        ? 'bg-[#007a3d] text-white shadow-sm'
+                        : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : selectedRetailer === 'shoprite' ? (
           /* ================= SHOPRITE HEADER ================= */
           <>
             <div className="border-b border-slate-200 px-5 py-2.5 flex items-center justify-between text-xs text-slate-600 bg-slate-50">
@@ -1386,7 +1648,7 @@ export function Simulator({ config }: SimulatorProps) {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></span>
                 <span className="font-bold text-white">
-                  {selectedRetailer === 'shoprite' ? 'ShopRite Digital Coupons Window' : selectedRetailer === 'walgreens' ? 'Walgreens Offers Page (walgreens.com/offers)' : selectedRetailer === 'cvs' ? 'CVS ExtraCare Deals' : selectedRetailer === 'kroger' ? 'Kroger Digital Coupons' : 'Family Dollar Smart Coupons Window (familydollar.com/smart-coupons)'}
+                  {selectedRetailer === 'publix' ? 'Publix Digital Coupons (publix.com/savings/digital-coupons)' : selectedRetailer === 'shoprite' ? 'ShopRite Digital Coupons Window' : selectedRetailer === 'walgreens' ? 'Walgreens Offers Page (walgreens.com/offers)' : selectedRetailer === 'cvs' ? 'CVS ExtraCare Deals' : selectedRetailer === 'kroger' ? 'Kroger Digital Coupons' : 'Family Dollar Smart Coupons Window (familydollar.com/smart-coupons)'}
                 </span>
                 <span className="text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded font-mono border border-indigo-400/30">
                   Target Scroll Container
@@ -1413,7 +1675,7 @@ export function Simulator({ config }: SimulatorProps) {
                     <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
                       <span>CouponSweep</span>
                       <span className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                        {selectedRetailer === 'shoprite' ? `• Store #${config.storeRsid || '218'}` : (selectedRetailer === 'walgreens' ? '• myWalgreens™' : (selectedRetailer === 'cvs' ? '• ExtraCare®' : (selectedRetailer === 'kroger' ? "• Shopper's Card" : '• Smart Coupons')))}
+                        {selectedRetailer === 'publix' ? '• Club Publix' : (selectedRetailer === 'shoprite' ? `• Store #${config.storeRsid || '218'}` : (selectedRetailer === 'walgreens' ? '• myWalgreens™' : (selectedRetailer === 'cvs' ? '• ExtraCare®' : (selectedRetailer === 'kroger' ? "• Shopper's Card" : '• Smart Coupons'))))}
                       </span>
                       <button
                         onClick={() => setActiveStrategy(prev => prev === 'instant' ? 'individual' : 'instant')}
@@ -1485,8 +1747,8 @@ export function Simulator({ config }: SimulatorProps) {
                         : 'bg-blue-50 text-blue-700 border border-blue-200'
                     }`}>
                       {(completionNotice.count === 0 || completionNotice.isAllLoaded) && !completionNotice.stopped 
-                        ? `✓ ALL ${selectedRetailer === 'shoprite' ? 'PRICE PLUS®' : (selectedRetailer === 'cvs' ? 'EXTRACARE®' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS' : 'MYWALGREENS™'))} COUPONS LOADED` 
-                        : `${selectedRetailer === 'shoprite' ? 'PRICE PLUS®' : (selectedRetailer === 'cvs' ? 'EXTRACARE®' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS' : 'MYWALGREENS™'))} SAVINGS ACTIVE`}
+                        ? `✓ ALL ${selectedRetailer === 'publix' ? 'CLUB PUBLIX' : (selectedRetailer === 'shoprite' ? 'PRICE PLUS®' : (selectedRetailer === 'cvs' ? 'EXTRACARE®' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS' : 'MYWALGREENS™')))} COUPONS LOADED` 
+                        : `${selectedRetailer === 'publix' ? 'CLUB PUBLIX' : (selectedRetailer === 'shoprite' ? 'PRICE PLUS®' : (selectedRetailer === 'cvs' ? 'EXTRACARE®' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS' : 'MYWALGREENS™')))} SAVINGS ACTIVE`}
                     </div>
                   </div>
                   <div className="p-8 text-center">
@@ -1498,8 +1760,8 @@ export function Simulator({ config }: SimulatorProps) {
                     )}
                     <p className="text-sm text-slate-600 font-medium leading-relaxed px-2">
                       {(completionNotice.count === 0 || completionNotice.isAllLoaded) && !completionNotice.stopped
-                        ? `Up to date — all digital coupons are loaded to your ${selectedRetailer === 'shoprite' ? 'ShopRite Price Plus®' : (selectedRetailer === 'cvs' ? 'CVS ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? "Kroger Shopper's Card" : 'myWalgreens™')))} card. No new offers to clip.`
-                        : `Successfully loaded to your ${selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens')))} account. All discounts will automatically apply at checkout.`}
+                        ? `Up to date — all digital coupons are loaded to your ${selectedRetailer === 'publix' ? 'Club Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite Price Plus®' : (selectedRetailer === 'cvs' ? 'CVS ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? "Kroger Shopper's Card" : 'myWalgreens™'))))} card. No new offers to clip.`
+                        : `Successfully loaded to your ${selectedRetailer === 'publix' ? 'Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))))} account. All discounts will automatically apply at checkout.`}
                     </p>
                     <button 
                       onClick={() => setCompletionNotice(null)}
@@ -1528,25 +1790,25 @@ export function Simulator({ config }: SimulatorProps) {
                       <User className="w-7 h-7 text-white stroke-[2.5px]" />
                     </div>
                     <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                      {selectedRetailer === 'shoprite' ? 'ShopRite Sign In Required' : (selectedRetailer === 'cvs' ? 'CVS Sign In Required' : (selectedRetailer === 'familydollar' ? 'Family Dollar Sign In Required' : (selectedRetailer === 'kroger' ? 'Kroger Sign In Required' : 'Walgreens Sign In Required')))}
+                      {selectedRetailer === 'publix' ? 'Publix Sign In Required' : (selectedRetailer === 'shoprite' ? 'ShopRite Sign In Required' : (selectedRetailer === 'cvs' ? 'CVS Sign In Required' : (selectedRetailer === 'familydollar' ? 'Family Dollar Sign In Required' : (selectedRetailer === 'kroger' ? 'Kroger Sign In Required' : 'Walgreens Sign In Required'))))}
                     </h3>
                     <div className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-lg text-[10px] font-black tracking-wider uppercase bg-blue-50 text-blue-700 border border-blue-200">
-                      {selectedRetailer === 'shoprite' ? 'PRICE PLUS® CLUB ACCOUNT' : (selectedRetailer === 'cvs' ? 'EXTRACARE® ACCOUNT' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS ACCOUNT' : (selectedRetailer === 'kroger' ? "SHOPPER'S CARD ACCOUNT" : 'MYWALGREENS™ REWARDS ACCOUNT')))}
+                      {selectedRetailer === 'publix' ? 'CLUB PUBLIX ACCOUNT' : (selectedRetailer === 'shoprite' ? 'PRICE PLUS® CLUB ACCOUNT' : (selectedRetailer === 'cvs' ? 'EXTRACARE® ACCOUNT' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS ACCOUNT' : (selectedRetailer === 'kroger' ? "SHOPPER'S CARD ACCOUNT" : 'MYWALGREENS™ REWARDS ACCOUNT'))))}
                     </div>
                   </div>
                   <div className="p-6 text-center">
                     <p className="text-base font-extrabold text-blue-700 leading-snug mb-2">
-                      Please sign in to your {selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens')))} account to load coupons
+                      Please sign in to your {selectedRetailer === 'publix' ? 'Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))))} account to load coupons
                     </p>
                     <p className="text-xs text-slate-600 font-medium leading-relaxed mb-6">
-                      Digital coupons must be linked to your {selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™')))} card so discounts automatically apply at checkout.
+                      Digital coupons must be linked to your {selectedRetailer === 'publix' ? 'Club Publix' : (selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™'))))} card so discounts automatically apply at checkout.
                     </p>
                     <div className="flex flex-col gap-2.5">
                       <button 
                         onClick={() => {
                           setIsGuest(false);
                           setShowLoginModal(false);
-                          addLog(`✓ Signed in! ${selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™')))} account active.`);
+                          addLog(`✓ Signed in! ${selectedRetailer === 'publix' ? 'Club Publix' : (selectedRetailer === 'shoprite' ? 'Price Plus®' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Smart Coupons' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™'))))} account active.`);
                           runLoaderScript();
                         }}
                         className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] cursor-pointer text-sm flex items-center justify-center gap-2"
@@ -1684,8 +1946,9 @@ export function Simulator({ config }: SimulatorProps) {
                           data-title={`${coupon.brand} ${coupon.discount}`}
                           data-cs-processed={coupon.isClipped ? "true" : undefined}
                           onClick={() => handleManualClip(coupon.id)}
+                          data-qa={selectedRetailer === 'publix' ? 'clip-coupon' : undefined}
                           className={`py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 text-white active:scale-95 cursor-pointer ${
-                            selectedRetailer === 'shoprite' ? 'bg-black hover:bg-slate-800' : selectedRetailer === 'walgreens' ? 'bg-red-600 hover:bg-red-700 wag-btn-clip' : selectedRetailer === 'cvs' ? 'bg-[#cc0000] hover:bg-red-800' : selectedRetailer === 'kroger' ? 'bg-[#00539f] hover:bg-[#003b70]' : 'bg-[#ed1c24] hover:bg-red-700 clip-coupon'
+                            selectedRetailer === 'publix' ? 'bg-[#007a3d] hover:bg-[#005a2d] p-coupon__clip' : selectedRetailer === 'shoprite' ? 'bg-black hover:bg-slate-800' : selectedRetailer === 'walgreens' ? 'bg-red-600 hover:bg-red-700 wag-btn-clip' : selectedRetailer === 'cvs' ? 'bg-[#cc0000] hover:bg-red-800' : selectedRetailer === 'kroger' ? 'bg-[#00539f] hover:bg-[#003b70]' : 'bg-[#ed1c24] hover:bg-red-700 clip-coupon'
                           }`}
                         >
                           {coupon.buttonLabel}
@@ -1732,7 +1995,7 @@ export function Simulator({ config }: SimulatorProps) {
                     About Us
                   </h5>
                   <ul className="space-y-2 text-slate-600 font-medium">
-                    <li><span className="hover:text-slate-900 cursor-pointer">About {selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))}</span></li>
+                    <li><span className="hover:text-slate-900 cursor-pointer">About {selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))}</span></li>
                     <li><span className="hover:text-slate-900 cursor-pointer">Our Stories</span></li>
                     <li><span className="hover:text-slate-900 cursor-pointer">Careers</span></li>
                     <li><span className="hover:text-slate-900 cursor-pointer">Press Room</span></li>
@@ -1758,7 +2021,7 @@ export function Simulator({ config }: SimulatorProps) {
                   <ul className="space-y-2 text-slate-600 font-medium">
                     <li><span className="hover:text-slate-900 cursor-pointer">Weekly Circular</span></li>
                     <li><span className="hover:text-slate-900 cursor-pointer">Digital Coupons</span></li>
-                    <li><span className="hover:text-slate-900 cursor-pointer">{selectedRetailer === 'shoprite' ? 'Price Plus® Club' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™ Cash'))}</span></li>
+                    <li><span className="hover:text-slate-900 cursor-pointer">{selectedRetailer === 'publix' ? 'Club Publix' : selectedRetailer === 'shoprite' ? 'Price Plus® Club' : (selectedRetailer === 'cvs' ? 'ExtraCare®' : (selectedRetailer === 'kroger' ? "Shopper's Card" : 'myWalgreens™ Cash'))}</span></li>
                     <li><span className="hover:text-slate-900 cursor-pointer">Mobile Apps</span></li>
                   </ul>
                 </div>
@@ -1794,7 +2057,7 @@ export function Simulator({ config }: SimulatorProps) {
                   <span className="hover:text-slate-800 cursor-pointer">Terms &amp; Conditions</span>
                 </div>
                 <div className="text-slate-400 font-medium">
-                  {selectedRetailer === 'shoprite' ? '© 2026 Wakefern Food Corp.' : (selectedRetailer === 'cvs' ? '© 2026 CVS Health' : (selectedRetailer === 'kroger' ? '© 2026 The Kroger Co.' : '© 2026 Walgreen Co.'))}
+                  {selectedRetailer === 'publix' ? '© 2026 Publix Asset Management Company' : selectedRetailer === 'shoprite' ? '© 2026 Wakefern Food Corp.' : (selectedRetailer === 'cvs' ? '© 2026 CVS Health' : (selectedRetailer === 'kroger' ? '© 2026 The Kroger Co.' : '© 2026 Walgreen Co.'))}
                 </div>
               </div>
             </footer>
@@ -1808,7 +2071,7 @@ export function Simulator({ config }: SimulatorProps) {
               <Terminal className="w-3.5 h-3.5 text-slate-400" /> Real-Time Multi-Retailer Execution Log
             </span>
             <span className="text-[10px] text-slate-500">
-              Active: {selectedRetailer === 'shoprite' ? 'shoprite.com (Store #218)' : 'walgreens.com/offers'}
+              Active: {selectedRetailer === 'publix' ? 'publix.com/savings/digital-coupons' : selectedRetailer === 'shoprite' ? 'shoprite.com (Store #218)' : selectedRetailer === 'cvs' ? 'cvs.com/extracare' : selectedRetailer === 'kroger' ? 'kroger.com/cl/coupons' : selectedRetailer === 'familydollar' ? 'familydollar.com/smart-coupons' : 'walgreens.com/offers'}
             </span>
           </div>
           <div className="bg-black/50 p-2 rounded max-h-24 overflow-y-auto space-y-1 text-[11px]">

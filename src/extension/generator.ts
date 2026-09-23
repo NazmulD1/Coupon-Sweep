@@ -7,36 +7,36 @@ export function generateExtensionFiles(config: ExtensionConfig): GeneratedFile[]
   const familydollarUrl = config.familydollarTargetUrl || 'https://www.familydollar.com/smart-coupons';
   const cvsUrl = config.cvsTargetUrl || 'https://www.cvs.com/extracare/home';
   const krogerUrl = config.krogerTargetUrl || 'https://www.kroger.com/savings/cl/coupons/';
+  const publixUrl = config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons';
 
   const manifest: Record<string, any> = {
     manifest_version: 3,
     name: "CouponSweep — Digital Coupon Loader",
-    version: "1.6.0",
-    description: "Automatically clips all available digital coupons on ShopRite, Walgreens, Family Dollar, CVS, Kroger, and grocery loyalty programs.",
+    version: "1.7.0",
+    description: "Automatically clips all available digital coupons on Publix, Kroger, Walgreens, CVS, ShopRite, and Family Dollar loyalty programs.",
     permissions: [
       "activeTab",
       "scripting",
       "tabs",
-      "storage"
+      "storage",
+      "webNavigation"
     ],
     host_permissions: [
-      "*://*.shoprite.com/*",
-      "*://*.wakefern.com/*",
-      "*://*.priceplus.com/*",
-      "*://*.walgreens.com/*",
-      "*://*.familydollar.com/*",
-      "*://*.cvs.com/*",
-      "*://*.kroger.com/*"
+      "<all_urls>"
     ],
     content_scripts: [
       {
         matches: [
-          "*://*.shoprite.com/*",
-          "*://*.wakefern.com/*",
-          "*://*.priceplus.com/*"
+          "<all_urls>"
+        ],
+        exclude_matches: [
+          "*://*.google.com/*",
+          "*://*.facebook.com/*",
+          "*://*.youtube.com/*"
         ],
         js: ["content.js"],
         all_frames: true,
+        match_about_blank: false,
         run_at: "document_idle"
       }
     ],
@@ -65,13 +65,14 @@ export function generateExtensionFiles(config: ExtensionConfig): GeneratedFile[]
   }
 
   const backgroundJs = `// CouponSweep - Background Service Worker (Manifest V3)
-// Multi-Retailer Support: ShopRite, Walgreens, Family Dollar, CVS, & Kroger
+// Multi-Retailer Support: ShopRite, Walgreens, Family Dollar, CVS, Kroger, & Publix
 
 const DEFAULT_SHOPRITE_URL = ${JSON.stringify(shopriteUrl)};
 const DEFAULT_WALGREENS_URL = ${JSON.stringify(walgreensUrl)};
 const DEFAULT_FAMILYDOLLAR_URL = ${JSON.stringify(familydollarUrl)};
 const DEFAULT_CVS_URL = ${JSON.stringify(cvsUrl)};
 const DEFAULT_KROGER_URL = ${JSON.stringify(krogerUrl)};
+const DEFAULT_PUBLIX_URL = ${JSON.stringify(publixUrl)};
 const DEFAULT_TARGET_URL = ${JSON.stringify(config.targetUrl || shopriteUrl)};
 
 const CONFIG = {
@@ -98,6 +99,9 @@ function detectRetailerFromUrl(url = '') {
   }
   if (lower.includes('kroger.com')) {
     return 'kroger';
+  }
+  if (lower.includes('publix.com')) {
+    return 'publix';
   }
   return 'generic';
 }
@@ -143,6 +147,13 @@ function resolveTargetUrl(tabUrl = '', targetRetailer = null) {
     return config.krogerTargetUrl || 'https://www.kroger.com/savings/cl/coupons/';
   }
 
+  if (retailer === 'publix') {
+    if (tabUrl && (tabUrl.includes('publix.com/savings/digital-coupons') || tabUrl.includes('publix.com'))) {
+      return tabUrl.includes('coupons') ? tabUrl : (config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons');
+    }
+    return config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons';
+  }
+
   return DEFAULT_TARGET_URL;
 }
 
@@ -159,7 +170,9 @@ chrome.action.onClicked.addListener(async (tab) => {
     tab.url.includes("coupon") || 
     tab.url.includes("offers") || 
     tab.url.includes("savings") || 
-    tab.url.includes("circular")
+    tab.url.includes("circular") ||
+    tab.url.includes("extracare") ||
+    tab.url.includes("deals")
   );
 
   if (isAlreadyOnCouponsPage) {
@@ -217,7 +230,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         tab.url.includes("coupon") || 
         tab.url.includes("offers") || 
         tab.url.includes("savings") || 
-        tab.url.includes("circular")
+        tab.url.includes("circular") ||
+        tab.url.includes("extracare") ||
+        tab.url.includes("deals")
       );
 
       if (isAlreadyOnCoupons) {
@@ -247,6 +262,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   let session = activeSessions.get(tabId) || {
     totalClipped: 0,
     activeLeaderFrameId: null,
+    leaderButtonCount: 0,
     isRunning: false
   };
 
@@ -255,15 +271,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const count = message.buttonCount || 0;
 
     if (session.activeLeaderFrameId === frameId) {
+      session.leaderButtonCount = count;
+      activeSessions.set(tabId, session);
       sendResponse({ isLeader: true, sessionClipped: session.totalClipped });
       return true;
     }
 
-    if (session.activeLeaderFrameId === null && count > 0) {
+    // A frame that possesses actionable buttons (> 0) ALWAYS takes leadership priority over a zero-button frame!
+    if (count > 0 && (session.leaderButtonCount || 0) === 0) {
       session.activeLeaderFrameId = frameId;
+      session.leaderButtonCount = count;
       session.isRunning = true;
       activeSessions.set(tabId, session);
-      console.log(\`[Background] Tab \${tabId}: Frame \${frameId} elected as active clipper leader (\${count} buttons)\`);
+      console.log(\`[Background] Tab \${tabId}: Frame \${frameId} ELECTED as active clipper leader (\${count} offers)\`);
+      sendResponse({ isLeader: true, sessionClipped: session.totalClipped });
+      return true;
+    }
+
+    if (session.activeLeaderFrameId === frameId) {
+      session.leaderButtonCount = count;
+      activeSessions.set(tabId, session);
+      sendResponse({ isLeader: true, sessionClipped: session.totalClipped });
+      return true;
+    }
+
+    if (session.activeLeaderFrameId === null) {
+      session.activeLeaderFrameId = frameId;
+      session.leaderButtonCount = count;
+      session.isRunning = true;
+      activeSessions.set(tabId, session);
       sendResponse({ isLeader: true, sessionClipped: session.totalClipped });
       return true;
     }
@@ -290,7 +326,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const session = activeSessions.get(tabId);
       session.isRunning = false;
       session.activeLeaderFrameId = null;
+      session.leaderButtonCount = 0;
       activeSessions.set(tabId, session);
+    }
+    chrome.tabs.sendMessage(tabId, { type: 'CS_STOP' }).catch(() => {});
+    if (chrome.webNavigation && chrome.webNavigation.getAllFrames) {
+      chrome.webNavigation.getAllFrames({ tabId: tabId }, (frames) => {
+        if (frames) {
+          frames.forEach(f => {
+            if (f.frameId !== 0) {
+              chrome.tabs.sendMessage(tabId, { type: 'CS_STOP' }, { frameId: f.frameId }).catch(() => {});
+            }
+          });
+        }
+      });
     }
   }
 
@@ -298,6 +347,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const allAlreadyLoaded = message.allAlreadyLoaded || (session.totalClipped === 0);
     session.isRunning = false;
     session.activeLeaderFrameId = null;
+    session.leaderButtonCount = 0;
     activeSessions.set(tabId, session);
 
     chrome.tabs.sendMessage(tabId, {
@@ -322,27 +372,44 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     activeSessions.set(tabId, {
       totalClipped: 0,
       activeLeaderFrameId: null,
+      leaderButtonCount: 0,
       isRunning: true
     });
 
-    // Only inject into subframes for ShopRite (where Wakefern embeds the coupon app).
-    // For Kroger, Walgreens, CVS, and Family Dollar, coupon controls are in the top window.
-    // Injecting into subframes on Kroger triggers Dynatrace/PerimeterX sandbox errors and crashes the page!
-    let needAllFrames = false;
+    // 1. Inject content.js into all frames (including coupon iframes)
     try {
-      const tab = await chrome.tabs.get(tabId);
-      const ret = detectRetailerFromUrl(tab?.url || '');
-      needAllFrames = (ret === 'shoprite');
-    } catch (e) {}
+      await chrome.scripting.executeScript({
+        target: { tabId: tabId, allFrames: true },
+        files: ['content.js']
+      });
+    } catch (err) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['content.js']
+        });
+      } catch (e) {}
+    }
 
-    await chrome.scripting.executeScript({
-      target: { tabId: tabId, allFrames: needAllFrames },
-      files: ['content.js']
-    });
+    // 2. Send CS_START to root frame
+    chrome.tabs.sendMessage(tabId, { type: 'CS_START', auto: true, mode: mode || 'instant' }).catch(() => {});
 
-    chrome.tabs.sendMessage(tabId, { type: 'CS_START', auto: true, mode: mode || 'instant' }, () => {
-      if (chrome.runtime.lastError) {}
-    });
+    // 3. Send CS_START to all child frames via webNavigation if available
+    if (chrome.webNavigation && chrome.webNavigation.getAllFrames) {
+      chrome.webNavigation.getAllFrames({ tabId: tabId }, (frames) => {
+        if (frames && frames.length > 0) {
+          frames.forEach(frame => {
+            if (frame.frameId !== 0) {
+              chrome.tabs.sendMessage(tabId, {
+                type: 'CS_START',
+                auto: true,
+                mode: mode || 'instant'
+              }, { frameId: frame.frameId }).catch(() => {});
+            }
+          });
+        }
+      });
+    }
   } catch (err) {
     console.error("Failed to inject coupon loader:", err);
   }
@@ -350,7 +417,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 `;
 
   const contentJs = `// CouponSweep - Stealth Content Script (Manifest V3)
-// Works for ShopRite, Walgreens, Kroger, CVS, and Family Dollar
+// Works for Publix, ShopRite, Walgreens, Kroger, CVS, and Family Dollar
 
 (function() {
   // 1. Strict Sandbox & Bot-Defense Isolation Guard
@@ -373,22 +440,34 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   }
 
   const currentUrl = (window.location.href || '').toLowerCase();
+  const currentHostname = (window.location.hostname || '').toLowerCase();
   
   // Detect active retailer profile
   const isWalgreens = currentUrl.includes('walgreens.com');
-  const isShopRite = currentUrl.includes('shoprite.com') || currentUrl.includes('wakefern.com') || currentUrl.includes('priceplus');
+  const isShopRite = currentUrl.includes('shoprite.com') || 
+                     currentUrl.includes('wakefern.com') || 
+                     currentUrl.includes('priceplus') || 
+                     (document.title && (document.title.toLowerCase().includes('shoprite') || document.title.toLowerCase().includes('digital coupon'))) ||
+                     Boolean(document.querySelector('digital-coupons-root')) ||
+                     (typeof window.CustomerData !== 'undefined') ||
+                     ${JSON.stringify(config.activeRetailer === 'shoprite')};
   const isFamilyDollar = currentUrl.includes('familydollar.com');
   const isCVS = currentUrl.includes('cvs.com');
   const isKroger = currentUrl.includes('kroger.com');
+  const isPublix = currentUrl.includes('publix.com');
 
-  // CRITICAL ANTI-DETECTION GUARD FOR KROGER & BOT MONITORS:
-  // On Kroger, Walgreens, CVS, and Family Dollar, coupon buttons are strictly in the top window.
-  // Kroger embeds Dynatrace OneAgent (ruxitagentjs) and PerimeterX (ZpTgQWYBw).
-  // These sensors spin up hidden sandboxed about:blank frames to inspect execution context.
+  if (isShopRite) {
+    console.log(\`🚀 [CouponSweep] Content script active on \${currentHostname || 'coupon frame'} (isTop: \${isTopFrame})\`);
+  }
+
+  // CRITICAL ANTI-DETECTION GUARD FOR BOT MONITORS & MODERN SPAs:
+  // On Publix, Kroger, Walgreens, CVS, and Family Dollar, coupon buttons are strictly in the top window.
+  // Many retailers embed security scripts (Dynatrace, PerimeterX, Akamai) that spin up hidden about:blank frames.
   // Executing extension code in subframes breaches their sandbox, causing 'Blocked script execution in about:blank'
   // and triggering recursive error handling loops that crash the page with 'RangeError: Maximum call stack size exceeded'!
   if (!isShopRite && !isTopFrame) {
-    return;
+    const hasCouponRoot = Boolean(document.querySelector('digital-coupons-root, [class*="coupon" i], [class*="offer" i]'));
+    if (!hasCouponRoot) return;
   }
 
   // Prevent multiple injections using content script isolated world scope (clean, safe, no window prototype pollution)
@@ -397,8 +476,68 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   }
   window.__cs_active = true;
 
-  const retailerName = isWalgreens ? 'Walgreens' : (isShopRite ? 'ShopRite' : (isFamilyDollar ? 'Family Dollar' : (isCVS ? 'CVS' : (isKroger ? 'Kroger' : 'Retailer'))));
-  const programName = isWalgreens ? 'myWalgreens™' : (isShopRite ? 'Price Plus®' : (isFamilyDollar ? 'Smart Coupons' : (isCVS ? 'ExtraCare®' : (isKroger ? 'Shopper\\'s Card' : 'Loyalty Card'))));
+  // Cross-frame parent <-> child bridge
+  window.addEventListener('message', (evt) => {
+    if (!evt || !evt.data) return;
+
+    // 1. Forward start signal from top window down to inner coupon frame
+    if (evt.data.type === 'CS_START_FROM_PARENT') {
+      console.log('[CouponSweep Frame] Received start signal from parent frame');
+      if (isRunning) {
+        console.log('[CouponSweep Frame] Already running in child frame, ignoring duplicate start');
+        return;
+      }
+      isRunning = true;
+      shouldStop = false;
+      activeCouponWindow = null;
+      nonScrollableBlacklist.clear();
+      startLoader(evt.data.mode || currentStrategy);
+    }
+
+    // 2. Stop signal from parent
+    if (evt.data.type === 'CS_STOP_FROM_PARENT') {
+      shouldStop = true;
+      isRunning = false;
+      updateStatus('Paused', aggregateClipped || localClipped);
+    }
+
+    // 3. Child asks parent to scroll along - DISABLED intentionally
+    // The inner frame contains the coupon list and must scroll internally down to the bottom
+    // without pushing the outer page down.
+    if (evt.data.type === 'CS_SCROLL_PARENT' && isTopFrame) {
+      // No-op: keep outer page anchored on the coupon frame
+    }
+
+    // 4. Child notifies parent of clipped coupon to update top-level HUD
+    if (evt.data.type === 'CS_COUPON_CLIPPED_FROM_CHILD' && isTopFrame) {
+      localClipped += (evt.data.count || 1);
+      updateStatus(\`⚡ Loaded #\${localClipped} offer: \${evt.data.title || 'Offer'}\`, localClipped);
+    }
+
+    // 4b. Child notifies parent of scanning/loaded count progress
+    if (evt.data.type === 'CS_PROGRESS_FROM_CHILD' && isTopFrame) {
+      updateStatus(evt.data.status || 'Scanning coupons...', evt.data.count !== undefined ? evt.data.count : 0);
+    }
+
+    // 5. Child finished
+    if (evt.data.type === 'CS_CLIPPER_FINISHED_FROM_CHILD' && isTopFrame) {
+      isRunning = false; // Reset running state in top coordinator frame
+      const isUpToDate = evt.data.allAlreadyLoaded || (evt.data.count === 0 && evt.data.loadedCount > 0);
+      const newlyLoaded = isUpToDate ? 0 : (evt.data.count || localClipped);
+      updateStatus(
+        isUpToDate 
+          ? 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.'
+          : \`🎉 All coupons loaded! (\${newlyLoaded} clipped)\`, 
+        newlyLoaded
+      );
+      if (typeof showCompletionBanner === 'function') {
+        showCompletionBanner(newlyLoaded, false, isUpToDate);
+      }
+    }
+  });
+
+  const retailerName = isWalgreens ? 'Walgreens' : (isShopRite ? 'ShopRite' : (isFamilyDollar ? 'Family Dollar' : (isCVS ? 'CVS' : (isKroger ? 'Kroger' : (isPublix ? 'Publix' : 'Retailer')))));
+  const programName = isWalgreens ? 'myWalgreens™' : (isShopRite ? 'Price Plus®' : (isFamilyDollar ? 'Smart Coupons' : (isCVS ? 'ExtraCare®' : (isKroger ? 'Shopper\\'s Card' : (isPublix ? 'Club Publix' : 'Loyalty Card')))));
 
   // Stealth logger: do NOT spew [CouponSweep] identifiers into the page console where Kroger/PerimeterX inspects
   const DEBUG = false;
@@ -449,6 +588,9 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     if (isKroger) {
       return '<span style="color: #475569; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 1px 6px; border-radius: 4px;">• Shopper\\'s Card</span>';
     }
+    if (isPublix) {
+      return '<span style="color: #27742d; font-size: 11px; font-weight: 700; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1px 6px; border-radius: 4px;">• Club Publix</span>';
+    }
     return '<span style="color: #475569; font-size: 11px; font-weight: 700; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 1px 6px; border-radius: 4px;">• Digital Offers</span>';
   }
 
@@ -458,7 +600,9 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
     const retailerBadgeHtml = getRetailerBadgeHtml();
 
-    if (!hudElement) {
+    if (!hudElement || !document.body.contains(hudElement)) {
+      const existing = document.getElementById('cs-coupon-loader-hud');
+      if (existing) existing.remove();
       hudElement = document.createElement('div');
       hudElement.id = 'cs-coupon-loader-hud';
       hudElement.innerHTML = [
@@ -643,21 +787,30 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   }
 
   function removeHud() {
+    const existing = document.getElementById('cs-coupon-loader-hud');
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
     if (hudElement && hudElement.parentNode) {
       hudElement.parentNode.removeChild(hudElement);
-      hudElement = null;
     }
+    hudElement = null;
   }
+
+  let isBannerActive = false;
 
   // Celebratory Banner on Completion
   function showCompletionBanner(count, stopped = false, isAllLoaded = false) {
     if (!isTopFrame) return;
 
+    // Prevent duplicate/repeated banner popups in the same session
+    if (isBannerActive || document.getElementById('cs-completion-banner')) {
+      return;
+    }
+    isBannerActive = true;
+
     try {
-      const hud = document.getElementById('cs-coupon-loader-hud');
-      if (hud && hud.parentNode) {
-        hud.parentNode.removeChild(hud);
-      }
+      removeHud();
 
       const existing = document.getElementById('cs-completion-banner');
       if (existing) existing.remove();
@@ -702,12 +855,12 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         '    </div>',
         '  </div>',
         '  <div style="padding: 24px; text-align: center;">',
-        '    <div style="display: ' + (isUpToDate ? 'none' : 'flex') + '; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 12px;">',
-        '      <span style="font-size: 48px; font-weight: 900; color: #0f172a; line-height: 1; letter-spacing: -2px;">' + count + '</span>',
-        '      <span style="font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Coupons</span>',
+        '    <div style="display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-bottom: 12px;">',
+        '      <span style="font-size: 48px; font-weight: 900; color: #0f172a; line-height: 1; letter-spacing: -2px;">' + (isUpToDate ? '0' : count) + '</span>',
+        '      <span style="font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">' + (isUpToDate ? 'Verified' : 'Coupons') + '</span>',
         '    </div>',
         '    <p style="margin: 0 0 24px 0; font-size: 13px; color: #475569; line-height: 1.5; font-weight: 500;">',
-        '      ' + (isUpToDate ? 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No new offers to clip at this time.' : 'Successfully loaded to your ' + retailerName + ' account. All discounts will automatically apply at checkout.'),
+        '      ' + (isUpToDate ? 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.' : 'Successfully loaded to your ' + retailerName + ' account. All discounts will automatically apply at checkout.'),
         '    </p>',
         '    <button id="cs-banner-ok" style="width: 100%; padding: 14px; background: #0f172a; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); display: flex; align-items: center; justify-content: center; gap: 8px;">',
         '      ✓ Got it, Thanks!',
@@ -742,6 +895,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         banner.style.transition = 'opacity 0.25s';
         setTimeout(() => {
           if (banner.parentNode) banner.parentNode.removeChild(banner);
+          isBannerActive = false;
         }, 300);
       };
 
@@ -1042,8 +1196,8 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       return false;
     }
 
-    // 2. Exclude headers, nav, footers
-    if (el.closest && el.closest('header, nav, footer, [role="navigation"], [role="tablist"], [role="tab"], .site-header, .navbar, .site-footer, .breadcrumb, .menu, .sidebar-nav')) {
+    // 2. Exclude headers, nav, footers (only genuine global site headers/nav/footers)
+    if (el.closest && el.closest('header, nav, footer, [role="navigation"], .site-header, .navbar, .site-footer, .breadcrumb, .sidebar-nav')) {
       return false;
     }
 
@@ -1055,15 +1209,18 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     const tag = el.tagName.toLowerCase();
     if (tag === 'a') {
       const href = (el.getAttribute('href') || '').trim();
-      if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+      const rawText = (el.innerText || el.textContent || '').trim().toLowerCase();
+      const isCouponText = rawText.includes('load coupon') || rawText.includes('clip coupon') || rawText.includes('load to card');
+      
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !isCouponText) {
         return false;
       }
     }
 
     const rawText = (el.innerText || el.textContent || '').trim();
     const rawAria = (el.getAttribute('aria-label') || '').trim();
-    const cleanText = rawText.replace(/[+\\r\\n\\t\\s]+/g, ' ').trim().toLowerCase();
-    const cleanAria = rawAria.replace(/[+\\r\\n\\t\\s]+/g, ' ').trim().toLowerCase();
+    const cleanText = rawText.replace(/[+\\r\\n\\t\\s\\u00a0\\xa0]+/g, ' ').trim().toLowerCase();
+    const cleanAria = rawAria.replace(/[+\\r\\n\\t\\s\\u00a0\\xa0]+/g, ' ').trim().toLowerCase();
     const combined = (cleanText + ' ' + cleanAria).trim();
 
     // 5. Exclude Pagination / Load More
@@ -1083,16 +1240,34 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       cleanText.includes('login to load') || cleanText.includes('sign in to load') || cleanText.includes('sign in to clip') ||
       cleanText === 'sign in' || cleanText === 'log in' || cleanText === 'sign up' || cleanText === 'register' ||
       cleanText === 'add to cart' || cleanText === 'add to list' || cleanText === 'shop now' || cleanText === 'view items' ||
+      cleanText === 'eligible items' || cleanAria === 'eligible items' || cleanText.includes('eligible items') ||
+      cleanText === 'filter coupons' || cleanText === 'print coupons' || cleanText === 'how to use digital coupons' ||
+      cleanText.startsWith('sort by') || cleanText === 'view all' || cleanText.startsWith('all coupons') ||
+      cleanText.startsWith('loaded -') || cleanText.startsWith('flash deal') || cleanText.startsWith('expiring') ||
+      cleanText.startsWith('weekly ad') || cleanText.startsWith('limit 4') || cleanText === 'redeemed' || cleanText === 'expired' ||
       cleanText === 'terms' || cleanText === 'details' || cleanText === 'close' || cleanText === 'clear'
     ) {
       return false;
     }
 
-    if (cleanAria === 'clipped' || cleanAria === 'loaded' || cleanAria === 'sent to card' || cleanAria.startsWith('already clipped') || cleanAria.startsWith('already loaded') || cleanAria.includes('unclip') || cleanAria.includes('remove')) {
+    // Rejection for already clipped or loaded state (including ShopRite "btn-loaded-to-card" / "Loaded for [Brand]")
+    if (
+      cleanText === 'loaded' || cleanText === 'clipped' || cleanText === 'in card' || cleanText === 'on card' ||
+      cleanText.startsWith('loaded -') || cleanText.startsWith('loaded ') || cleanText.startsWith('clipped ') ||
+      cleanAria === 'clipped' || cleanAria === 'loaded' || cleanAria === 'sent to card' ||
+      cleanAria.startsWith('loaded for') || cleanAria.startsWith('loaded') ||
+      cleanAria.startsWith('already clipped') || cleanAria.startsWith('already loaded') ||
+      cleanAria.includes('unclip') || cleanAria.includes('remove')
+    ) {
       return false;
     }
     
-    if (el.classList.contains('unclip') || el.classList.contains('is-clipped') || el.classList.contains('is-loaded') || el.classList.contains('wag-btn-clipped') || el.getAttribute('data-element-name') === 'Clipped') {
+    if (
+      el.classList.contains('btn-loaded-to-card') || el.classList.contains('loaded-to-card') ||
+      el.classList.contains('btn-loaded') || el.classList.contains('is-loaded') ||
+      el.classList.contains('unclip') || el.classList.contains('is-clipped') ||
+      el.classList.contains('wag-btn-clipped') || el.getAttribute('data-element-name') === 'Clipped'
+    ) {
       return false;
     }
 
@@ -1124,8 +1299,21 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       el.classList.contains('clip-coupon') || el.classList.contains('clip-btn');
 
     const hasCVSClipFormat = 
-      cleanText.includes('send to card') || cleanAria.includes('send to card') || 
-      (rawText === '+' && window.location.href.includes('cvs.com'));
+      isCVS && (
+        cleanText === 'send to card' || cleanAria === 'send to card' ||
+        cleanText.includes('send to card') || cleanAria.includes('send to card') ||
+        cleanText === 'send to extra care' || cleanAria === 'send to extra care' ||
+        cleanText.includes('send to extra care') || cleanAria.includes('send to extra care') ||
+        cleanText === 'clip' || cleanAria === 'clip' ||
+        cleanText === 'clip deal' || cleanAria === 'clip deal' ||
+        cleanText.includes('add coupon') || cleanAria.includes('add coupon') ||
+        cleanText.includes('add to card') || cleanAria.includes('add to card') ||
+        el.getAttribute('data-testid') === 'send-to-card-button' ||
+        (el.getAttribute('data-testid') || '').toLowerCase().includes('sendtocard') ||
+        (el.getAttribute('data-testid') || '').toLowerCase().includes('clip') ||
+        (el.getAttribute('aria-label') || '').toLowerCase().includes('send to card') ||
+        (rawText === '+' && (isCVS || window.location.href.includes('cvs.com')))
+      );
 
     const hasKrogerClipFormat =
       isKroger && (
@@ -1138,14 +1326,45 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         cleanText.includes('add card to clip') || cleanAria.includes('add card to clip')
       );
 
-    const isClipKeyword = CONFIG.keywords.some(kw => cleanText.includes(kw) || cleanAria.includes(kw));
+    const hasPublixClipFormat =
+      isPublix && (
+        cleanText === 'clip coupon' || cleanAria === 'clip coupon' ||
+        cleanText === 'clip' || cleanAria === 'clip' ||
+        cleanText.includes('clip coupon') || cleanAria.includes('clip coupon') ||
+        cleanText.startsWith('clip coupon') || cleanAria.startsWith('clip coupon') ||
+        el.getAttribute('data-qa') === 'clip-coupon' ||
+        el.getAttribute('data-testid') === 'clip-coupon' ||
+        el.classList.contains('p-coupon__clip') ||
+        el.classList.contains('p-button--clip') ||
+        (el.tagName.toLowerCase() === 'button' && (cleanText.includes('clip') || cleanAria.includes('clip')))
+      );
+
+    // ShopRite specific clip patterns: "Load Coupon", "Clip Coupon", "Load to card", "Load"
+    const hasShopRiteClipFormat =
+      isShopRite && (
+        cleanText === 'load coupon' || cleanAria === 'load coupon' ||
+        cleanText === 'load' || cleanAria === 'load' ||
+        cleanText === 'clip coupon' || cleanAria === 'clip coupon' ||
+        cleanText === 'clip' || cleanAria === 'clip' ||
+        cleanText === 'load to card' || cleanAria === 'load to card' ||
+        cleanText === 'add to card' || cleanAria === 'add to card' ||
+        cleanText === 'load offer' || cleanAria === 'load offer' ||
+        cleanText === 'clip offer' || cleanAria === 'clip offer' ||
+        el.classList.contains('load-coupon') ||
+        el.getAttribute('data-qa') === 'load-coupon' ||
+        el.getAttribute('data-testid') === 'load-coupon' ||
+        ((el.tagName.toLowerCase() === 'button' || el.getAttribute('role') === 'button') && 
+         (cleanText === 'load coupon' || cleanAria === 'load coupon' || cleanText === 'load' || cleanAria === 'load'))
+      );
+
+    const isClipKeyword = CONFIG.keywords.some(kw => cleanText === kw || cleanAria === kw);
     const hasCouponKeywords = 
-      /\\b(load|clip)\\b.*\\b(card|coupon|offer|deal|discount|savings|save)\\b/i.test(combined) ||
-      /\\b(add|save)\\b.*\\b(to card|to loyalty|to account)\\b/i.test(combined) ||
+      /^(load|clip)\\b.*\\b(card|coupon|offer|deal|discount|savings|save)$/i.test(cleanText) ||
+      /^(load|clip)\\b.*\\b(card|coupon|offer|deal|discount|savings|save)$/i.test(cleanAria) ||
       /^(clip|load)$/i.test(cleanText) ||
       (el.hasAttribute('data-coupon-id') && /\\b(load|clip)\\b/i.test(cleanText));
 
-    if (!hasExactCouponText && !hasWalgreensClipFormat && !hasFamilyDollarClipFormat && !hasCVSClipFormat && !hasKrogerClipFormat && !isClipKeyword && !hasCouponKeywords) {
+    if (!hasExactCouponText && !hasShopRiteClipFormat && !hasWalgreensClipFormat && !hasFamilyDollarClipFormat && !hasCVSClipFormat && !hasKrogerClipFormat && !hasPublixClipFormat && !isClipKeyword && !hasCouponKeywords) {
       if (!el.hasAttribute('data-coupon-id') && !el.classList.contains('clip-button') && !el.classList.contains('load-to-card')) {
         return false;
       }
@@ -1154,38 +1373,71 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     return true;
   }
 
-  // Check if coupon items exist on the page and all are already clipped
-  function checkAllCouponsAlreadyLoaded() {
-    const unclipped = findUnclippedButtons();
-    if (unclipped.length > 0) {
-      return {
-        isAllLoaded: false,
-        clippedCount: 0,
-        unclippedCount: unclipped.length
-      };
-    }
-
-    const clippedBadgesOrButtons = queryAllDeep('button, [role="button"], span, div').filter(el => {
+  // Count loaded coupons across the DOM (deduping by parent card or button)
+  function countLoadedCoupons() {
+    const loadedCards = new Set();
+    const candidates = queryAllDeep('button, [role="button"], span, div').filter(el => {
       if (el.closest && el.closest('#cs-coupon-loader-hud, #cs-mode-modal, [id^="cs-"], [class*="cs-"]')) return false;
       if (el.closest && el.closest('header, nav, footer, [role="navigation"]')) return false;
       const t = (el.innerText || el.textContent || '').trim().toLowerCase();
       const aria = (el.getAttribute('aria-label') || '').trim().toLowerCase();
       return (
-        t === 'clipped' || t === 'loaded' || t === 'in card' || t === 'on card' || t === 'sent to card' ||
-        t === 'already clipped' || t === 'already loaded' || t === 'clipped ✓' ||
-        t === 'loaded ✓' || t === 'unclip' || aria === 'clipped' || aria === 'loaded' || aria === 'unclip' || aria === 'sent to card' ||
+        t === 'loaded' || t === 'clipped' || t === 'in card' || t === 'on card' || t === 'sent to card' ||
+        t === 'already clipped' || t === 'already loaded' || t === 'clipped ✓' || t === 'loaded ✓' ||
+        aria.startsWith('loaded for') || aria.startsWith('loaded') || aria === 'clipped' || aria === 'sent to card' ||
         t.includes('coupon clipped') || t.includes('offer clipped') || t.includes('coupon loaded') ||
-        el.classList.contains('is-clipped') || el.classList.contains('is-loaded') ||
-        el.classList.contains('wag-btn-clipped') || el.getAttribute('data-element-name') === 'Clipped' ||
-        el.classList.contains('unclip')
+        el.classList.contains('btn-loaded-to-card') || el.classList.contains('loaded-to-card') ||
+        el.classList.contains('btn-loaded') || el.classList.contains('is-loaded') ||
+        el.classList.contains('wag-btn-clipped') || el.classList.contains('is-clipped') ||
+        el.getAttribute('data-element-name') === 'Clipped'
       );
     });
 
+    for (const el of candidates) {
+      const card = el.closest('article, [class*="coupon" i], [class*="card" i], [class*="offer" i]') || el.closest('button') || el;
+      loadedCards.add(card);
+    }
+    return loadedCards.size;
+  }
+
+  // Check if coupon items exist on the page and all are already clipped
+  function checkAllCouponsAlreadyLoaded() {
+    const unclipped = findUnclippedButtons();
+    const count = countLoadedCoupons();
     return {
-      isAllLoaded: clippedBadgesOrButtons.length > 0 && unclipped.length === 0,
-      clippedCount: clippedBadgesOrButtons.length,
+      isAllLoaded: count > 0 && unclipped.length === 0,
+      clippedCount: count,
       unclippedCount: unclipped.length
     };
+  }
+
+  function isScrollAtBottom(container) {
+    // 1. If an identified scroll container element exists with actual scrollable overflow
+    if (container && container !== window && container !== document.body && container !== document.documentElement) {
+      if (container.scrollHeight > container.clientHeight + 25) {
+        return (container.scrollTop + container.clientHeight >= container.scrollHeight - 25);
+      }
+    }
+
+    // 2. Angular digital-coupons-root or main scroll container
+    const root = document.querySelector('digital-coupons-root, [class*="coupon-list" i], [class*="coupons" i], main, [role="main"]');
+    if (root && root.clientHeight > 0 && root.scrollHeight > root.clientHeight + 25) {
+      return (root.scrollTop + root.clientHeight >= root.scrollHeight - 35);
+    }
+
+    // 3. Document / window scroll (only valid if window has true vertical scrollable overflow)
+    const innerH = window.innerHeight || (document.documentElement ? document.documentElement.clientHeight : 0);
+    const totalH = Math.max(
+      document.body ? document.body.scrollHeight : 0,
+      document.documentElement ? document.documentElement.scrollHeight : 0
+    );
+    const scrollY = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0);
+
+    if (totalH > innerH + 60 && innerH > 0) {
+      return (scrollY + innerH >= totalH - 50);
+    }
+
+    return false;
   }
 
   // Find unclipped coupon buttons
@@ -1221,57 +1473,193 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     return null;
   }
 
-  // Find scroll containers
-  function findScrollContainers(buttons = []) {
-    const containers = new Set();
+  // Persistent reference to the detected coupon window container (critical for ShopRite's inner-window architecture)
+  let activeCouponWindow = null;
+  const nonScrollableBlacklist = new Set();
 
-    for (const btn of buttons.slice(0, 8)) {
-      let parent = btn.parentElement;
+  // Tests if an element is an actual scrollable container (scrollHeight > clientHeight + 5 and changing scrollTop)
+  function isElementScrollable(el) {
+    if (!el || el === document.body || el === document.documentElement || el === window) return false;
+    if (nonScrollableBlacklist.has(el)) return false;
+    if (el.clientHeight < 80) return false;
+    if (el.scrollHeight <= el.clientHeight + 15) return false;
+
+    // Active test: Can scrollTop change?
+    const prev = el.scrollTop;
+    el.scrollTop = prev + 3;
+    const canChange = (el.scrollTop !== prev);
+    el.scrollTop = prev;
+    if (canChange) return true;
+
+    const style = window.getComputedStyle(el);
+    const overflowY = (style.overflowY || '') + (style.overflow || '');
+    if ((overflowY.includes('auto') || overflowY.includes('scroll') || overflowY.includes('overlay')) && (el.scrollHeight - el.clientHeight > 80)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Finds the inner Coupon Window holding the offers (ShopRite, Publix, and nested container setups)
+  function findCouponWindow(buttons = []) {
+    // 1. If we already found a valid connected coupon window, keep using it!
+    if (activeCouponWindow && activeCouponWindow.isConnected && !nonScrollableBlacklist.has(activeCouponWindow)) {
+      if (activeCouponWindow !== document.body && activeCouponWindow !== document.documentElement && activeCouponWindow !== window) {
+        if (activeCouponWindow.scrollHeight > activeCouponWindow.clientHeight + 15) {
+          return activeCouponWindow;
+        }
+      }
+    }
+
+    // 2. Direct ancestor walk from coupon buttons or coupon cards
+    // In ShopRite's two-window architecture, the coupon grid is an inner scrollable element containing the cards
+    const testElements = buttons.length > 0 
+      ? buttons 
+      : Array.from(queryAllDeep('button, [role="button"], [class*="coupon" i], [class*="card" i], article')).filter(el => {
+          const t = (el.textContent || '').trim().toLowerCase();
+          const aria = (el.getAttribute('aria-label') || '').trim().toLowerCase();
+          return (
+            t === 'load coupon' || t === 'eligible items' || t.startsWith('save $') || t.includes('load coupon') ||
+            t === 'loaded' || t === 'clipped' || aria.startsWith('loaded') ||
+            el.classList.contains('btn-loaded-to-card') || el.classList.contains('loaded-to-card') ||
+            el.classList.contains('btn-loaded')
+          );
+        });
+
+    for (const ref of testElements) {
+      let parent = ref.parentElement;
       while (parent && parent !== document.body && parent !== document.documentElement) {
-        const style = window.getComputedStyle(parent);
-        const overflow = (style.overflowY || '') + (style.overflow || '');
-        if ((overflow.includes('auto') || overflow.includes('scroll')) && parent.scrollHeight > parent.clientHeight + 30) {
-          containers.add(parent);
+        if (!nonScrollableBlacklist.has(parent) && parent.clientHeight >= 120 && parent.scrollHeight > parent.clientHeight + 25) {
+          const prev = parent.scrollTop;
+          parent.scrollTop = prev + 4;
+          const changed = (parent.scrollTop !== prev);
+          parent.scrollTop = prev;
+
+          const style = window.getComputedStyle(parent);
+          const ov = (style.overflowY || '') + (style.overflow || '');
+          const isScrollStyled = ov.includes('auto') || ov.includes('scroll') || ov.includes('overlay');
+
+          if (changed || (isScrollStyled && parent.scrollHeight - parent.clientHeight > 80)) {
+            activeCouponWindow = parent;
+            return parent;
+          }
         }
         parent = parent.parentElement;
       }
     }
 
-    const modals = queryAllDeep(
-      '[role="dialog"], [aria-modal="true"], .modal, .dialog, .drawer, .flyout, [class*="coupon" i], [class*="offer" i], [class*="window" i], [id*="coupon" i]'
-    );
-    for (const m of modals) {
-      const style = window.getComputedStyle(m);
-      const overflow = (style.overflowY || '') + (style.overflow || '');
-      if ((overflow.includes('auto') || overflow.includes('scroll')) && m.scrollHeight > m.clientHeight + 40) {
-        containers.add(m);
-      }
-    }
-
-    if (containers.size === 0) {
-      const divs = queryAllDeep('div, section, main, article, ul');
-      for (const d of divs) {
-        if (d.scrollHeight > d.clientHeight + 100 && d.clientHeight > 150) {
-          const style = window.getComputedStyle(d);
-          const overflow = (style.overflowY || '') + (style.overflow || '');
-          if (overflow.includes('auto') || overflow.includes('scroll')) {
-            const textContent = (d.innerText || '').toLowerCase();
-            if (textContent.includes('coupon') || textContent.includes('offer') || textContent.includes('load') || textContent.includes('clip') || d.querySelectorAll('button, a').length > 3) {
-              containers.add(d);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(containers).filter(c => {
-      return c !== window && c !== document.body && c !== document.documentElement;
-    }).sort((a, b) => {
-      let depthA = 0, depthB = 0;
-      let curr = a; while (curr.parentElement) { depthA++; curr = curr.parentElement; }
-      curr = b; while (curr.parentElement) { depthB++; curr = curr.parentElement; }
-      return depthB - depthA;
+    // 3. Search candidate scrollable panels across DOM with active scroll test
+    const candidateContainers = Array.from(queryAllDeep('div, section, main, article, [role="region"], [role="feed"]')).filter(el => {
+      if (el === document.body || el === document.documentElement || nonScrollableBlacklist.has(el)) return false;
+      if (el.clientHeight < 120) return false;
+      if (el.scrollHeight <= el.clientHeight + 30) return false;
+      const style = window.getComputedStyle(el);
+      const ov = (style.overflowY || '') + (style.overflow || '');
+      return ov.includes('auto') || ov.includes('scroll') || ov.includes('overlay');
     });
+
+    let best = null;
+    let maxOverflow = 0;
+    for (const cand of candidateContainers) {
+      const prev = cand.scrollTop;
+      cand.scrollTop = prev + 4;
+      const canScroll = (cand.scrollTop !== prev);
+      cand.scrollTop = prev;
+      const overflow = cand.scrollHeight - cand.clientHeight;
+
+      if (canScroll && overflow > maxOverflow) {
+        maxOverflow = overflow;
+        best = cand;
+      }
+    }
+
+    if (best) {
+      activeCouponWindow = best;
+      return best;
+    }
+
+    // 4. Fallback to outer window / document body
+    return document.scrollingElement || document.documentElement || document.body || window;
+  }
+
+  // Dedicated Coupon Section Scroller:
+  // Scrolls the inner coupon grid and inner frame to the bottom without displacing the outer browser page
+  function scrollCouponWindow(step, buttons = []) {
+    let innerScrolled = false;
+    const couponWin = findCouponWindow(buttons);
+    
+    // 1. If an identified scrollable element exists (ancestor container)
+    if (couponWin && couponWin !== document.body && couponWin !== document.documentElement && couponWin !== window) {
+      const beforeScrollTop = couponWin.scrollTop;
+      couponWin.scrollTop += step;
+      try {
+        couponWin.scrollBy({ top: step, behavior: 'smooth' });
+      } catch (e) {}
+      couponWin.dispatchEvent(new Event('scroll', { bubbles: true }));
+      couponWin.dispatchEvent(new CustomEvent('scroll', { bubbles: true }));
+      try {
+        couponWin.dispatchEvent(new WheelEvent('wheel', { deltaY: step, bubbles: true }));
+      } catch (e) {}
+
+      const afterScrollTop = couponWin.scrollTop;
+      const scrollChanged = (afterScrollTop !== beforeScrollTop);
+      const isAtBottom = (couponWin.scrollTop + couponWin.clientHeight >= couponWin.scrollHeight - 10);
+      innerScrolled = scrollChanged || isAtBottom;
+
+      if (!scrollChanged && !isAtBottom && beforeScrollTop === 0) {
+        nonScrollableBlacklist.add(couponWin);
+        activeCouponWindow = null;
+      }
+    }
+
+    // 2. ALSO scroll custom Angular components and main containers in this frame
+    const candidateRoots = queryAllDeep('digital-coupons-root, [class*="coupon-list" i], [class*="coupons" i], main, [role="main"]');
+    for (const r of candidateRoots) {
+      if (r !== couponWin && r.scrollHeight > r.clientHeight + 25) {
+        r.scrollTop += step;
+        try { r.scrollBy({ top: step, behavior: 'smooth' }); } catch (e) {}
+        r.dispatchEvent(new Event('scroll', { bubbles: true }));
+        innerScrolled = true;
+      }
+    }
+
+    // 3. Scroll inner frame window / documentElement / body
+    try {
+      window.scrollBy({ top: step, behavior: 'smooth' });
+    } catch (e) {
+      window.scrollBy(0, step);
+    }
+    if (document.documentElement) {
+      document.documentElement.scrollTop += step;
+    }
+    if (document.body) {
+      document.body.scrollTop += step;
+    }
+    window.dispatchEvent(new Event('scroll', { bubbles: true }));
+    document.dispatchEvent(new Event('scroll', { bubbles: true }));
+
+    // 4. Actively bring the last coupon card into view to trigger infinite scroll / lazy loading
+    try {
+      const allCoupons = Array.from(document.querySelectorAll(
+        'button.btn-loaded-to-card, button.btn-load-to-card, button[aria-label*="Loaded" i], button[aria-label*="Load" i], [class*="coupon-card" i], [class*="coupon-tile" i], [class*="coupon-item" i], [class*="coupon" i]'
+      ));
+      if (allCoupons.length > 0) {
+        const lastEl = allCoupons[allCoupons.length - 1];
+        lastEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    } catch (e) {}
+
+    // CRITICAL: We do NOT scroll the parent window. The outer page remains anchored on the coupon frame.
+    return true;
+  }
+
+  // Find scroll containers (delegates to findCouponWindow for precision)
+  function findScrollContainers(buttons = []) {
+    const couponWin = findCouponWindow(buttons);
+    if (couponWin && couponWin !== document.body && couponWin !== document.documentElement && couponWin !== window) {
+      return [couponWin];
+    }
+    return [];
   }
 
   function checkAkamaiBlocked() {
@@ -1311,16 +1699,16 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     return { isLimit200: false, isError: false, element: null, message: '' };
   }
 
-  // Wait for Walgreens coupon button to transition to 'Clipped' / 'Added' state
+  // Wait for coupon button to transition to 'Loaded' / 'Clipped' / 'Added' state
   async function waitForCouponConfirmation(btn, maxWaitMs = 2200) {
     const startTime = Date.now();
     while (Date.now() - startTime < maxWaitMs) {
       const text = (btn.textContent || btn.innerText || '').trim().toLowerCase();
       const ariaPressed = btn.getAttribute('aria-pressed');
       const isDisabled = btn.disabled || btn.getAttribute('aria-disabled') === 'true';
-      const hasClippedClass = (btn.className || '').toLowerCase().includes('clipped') || (btn.className || '').toLowerCase().includes('added');
+      const hasClippedClass = (btn.className || '').toLowerCase().includes('clipped') || (btn.className || '').toLowerCase().includes('added') || (btn.className || '').toLowerCase().includes('loaded');
       
-      if (text.includes('clipped') || text.includes('added') || text.includes('saved') || text.includes('loaded') || text.includes('unclip') || ariaPressed === 'true' || (isDisabled && !text.includes('clip')) || hasClippedClass) {
+      if (text.includes('clipped') || text.includes('added') || text.includes('saved') || text.includes('loaded') || text.includes('unclip') || ariaPressed === 'true' || (isDisabled && !text.includes('clip') && !text.includes('load')) || hasClippedClass) {
         return true;
       }
       await sleep(150);
@@ -1376,16 +1764,17 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     try { btn.dispatchEvent(new PointerEvent('pointerup', pointerInit)); } catch (e) {}
     try { btn.dispatchEvent(new MouseEvent('mouseup', mouseInit)); } catch (e) {}
     
-    // Dispatch a single synthetic click to avoid double-triggering toggle actions
+    // Dispatch synthetic mouse click, then guarantee native .click() execution on the real clickable element
     try { 
       btn.dispatchEvent(new MouseEvent('click', mouseInit)); 
-    } catch (e) {
-      try {
-        if (typeof btn.click === 'function') {
-          btn.click();
-        }
-      } catch (err) {}
-    }
+    } catch (e) {}
+
+    try {
+      const realClickable = btn.closest('button, [role="button"], a[role="button"]') || btn;
+      if (typeof realClickable.click === 'function') {
+        realClickable.click();
+      }
+    } catch (err) {}
   }
 
   // Check login status for ShopRite & Walgreens
@@ -1485,6 +1874,39 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       }
     }
 
+    // 6. Publix check
+    if (isPublix) {
+      // Direct affirmative logged-in signals
+      const hasSignOut = document.querySelector('a[href*="logout"], a[href*="signout"], button[data-qa*="logout"], [data-testid*="logout"], button[aria-label*="log out" i], button[aria-label*="sign out" i]');
+      if (hasSignOut) return true;
+
+      const userGreeting = document.querySelector('[data-qa*="user-greeting"], [data-testid*="user-name"], .user-name, [class*="UserGreeting"], [class*="user-name"], [data-qa*="account-menu"], [aria-label*="Club Publix" i]');
+      if (userGreeting && (userGreeting.textContent || '').trim().length > 0) return true;
+
+      const bodyText = (document.body ? document.body.innerText : '') || '';
+      if (bodyText.includes('Club Publix ID') || (bodyText.includes('Hi, ') && !bodyText.includes('Hi Guest'))) {
+        return true;
+      }
+
+      // Negative logged-out signals: presence of visible Log In or Sign In buttons
+      const publixLoginBtn = queryAllDeep('a[href*="/login"], a[href*="/signin"], button[data-qa*="login"], [data-testid*="login-button"], button, a').find(el => {
+        if (!el || el.offsetParent === null) return false;
+        const text = (el.textContent || '').trim().toLowerCase();
+        return text === 'log in' || text === 'sign in';
+      });
+      if (publixLoginBtn) {
+        return false;
+      }
+
+      const header = document.querySelector('header, nav, [role="banner"]');
+      if (header) {
+        const headerText = (header.textContent || header.innerText || '').toLowerCase();
+        if (headerText.includes('log in') || headerText.includes('sign in')) {
+          return false;
+        }
+      }
+    }
+
     const pageText = (document.body ? document.body.innerText : '') || '';
     const hasGuestIndicator = pageText.includes('Hi Guest') || pageText.includes('Sign In or Register') || pageText.includes('Sign in to clip');
     
@@ -1505,6 +1927,10 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     isRunning = true;
     shouldStop = false;
     localClipped = 0;
+
+    // Clean up any previous completion banners so the HUD is completely visible
+    const existingBanner = document.getElementById('cs-completion-banner');
+    if (existingBanner) existingBanner.remove();
 
     console.log(\`🚀 [CouponSweep] Starting initialization on \${retailerName} in \${isTopFrame ? 'TOP WINDOW' : 'FRAME'}...\`);
     updateStatus('Verifying ' + programName + ' loyalty status...', aggregateClipped || 0);
@@ -1568,7 +1994,37 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       }
     }
 
-    // Wait for coupons to hydrate
+    // SPECIAL DELEGATION FOR NESTED IFRAME ARCHITECTURES (ShopRite Digital Coupon Center):
+    // In top frame, immediately delegate to the coupon iframe if present
+    if (isTopFrame) {
+      const childIframes = Array.from(document.querySelectorAll('iframe'));
+      if (childIframes.length > 0) {
+        console.log(\`[CouponSweep] Top frame detected \${childIframes.length} iframes. Delegating clipping to child coupon frame.\`);
+        updateStatus('Connecting to ' + retailerName + ' Digital Coupon Center...', 0);
+        
+        const couponIframe = childIframes.find(f => {
+          const s = ((f.src || '') + ' ' + (f.title || '') + ' ' + (f.name || '') + ' ' + (f.id || '')).toLowerCase();
+          return s.includes('coupon') || s.includes('digital') || s.includes('wakefern') || s.includes('shoprite');
+        }) || childIframes[0];
+
+        try {
+          couponIframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {}
+
+        childIframes.forEach(iframe => {
+          try {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.postMessage({ type: 'CS_START_FROM_PARENT', mode: currentStrategy }, '*');
+            }
+          } catch (e) {}
+        });
+
+        // Top frame stays as visual coordinator
+        return;
+      }
+    }
+
+    // Wait for coupons to hydrate (in frame or single-window sites)
     updateStatus('Scanning page for available ' + retailerName + ' offers...', aggregateClipped || 0);
     let waitAttempts = 0;
     const MAX_WAIT_ATTEMPTS = 12;
@@ -1598,35 +2054,26 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       return;
     }
 
-    // Check if everything is already clipped
+    // Check if initial viewport offers are already clipped
     const initialStatus = checkAllCouponsAlreadyLoaded();
     if (initialButtons.length === 0 && initialStatus.isAllLoaded && initialStatus.clippedCount > 0) {
-      isRunning = false;
-      console.log(\`[CouponSweep] Account is 100% up to date. \${initialStatus.clippedCount} coupons loaded.\`);
-      
-      try {
-        chrome.runtime.sendMessage({
-          type: 'CS_CLIPPER_FINISHED',
-          clipped: 0,
-          stopped: false,
-          allAlreadyLoaded: true,
-          loadedCount: initialStatus.clippedCount
-        });
-      } catch (e) {}
-      return;
+      console.log(\`[CouponSweep] Initial view offers already loaded (\${initialStatus.clippedCount}). Scrolling through entire list to verify all coupons...\`);
+      updateStatus(\`Verifying loaded coupons (\${initialStatus.clippedCount} on card)... scrolling list...\`, initialStatus.clippedCount);
     }
 
     // Leader election
-    let isLeader = false;
+    let isLeader = true;
     try {
       const resp = await new Promise((resolve) => {
         chrome.runtime.sendMessage({
           type: 'CS_CLAIM_CLIPPER',
-          buttonCount: initialButtons.length
+          buttonCount: initialButtons.length || initialStatus.clippedCount || 1
         }, (res) => resolve(res || {}));
       });
-      isLeader = resp.isLeader;
-      if (resp.sessionClipped !== undefined) {
+      if (resp && resp.isLeader !== undefined) {
+        isLeader = resp.isLeader;
+      }
+      if (resp && resp.sessionClipped !== undefined) {
         aggregateClipped = resp.sessionClipped;
       }
     } catch (e) {
@@ -1641,17 +2088,32 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
     // Clipping Loop
     let consecutiveEmptyPasses = 0;
-    const MAX_EMPTY_PASSES = 12;
+    let sustainedBottomPasses = 0;
+    let lastTotalOffers = 0;
+    const MAX_EMPTY_PASSES = 35;
+    const REQUIRED_BOTTOM_PASSES = 6;
 
     while (!shouldStop) {
       const buttons = findUnclippedButtons();
+      const currentLoadedCount = countLoadedCoupons();
+      const currentTotalOffers = buttons.length + currentLoadedCount;
+
+      // Track if more coupons populated/loaded up as user scrolls
+      if (currentTotalOffers > lastTotalOffers) {
+        console.log(\`[CouponSweep] Coupons populated: total offers grew from \${lastTotalOffers} to \${currentTotalOffers}\`);
+        lastTotalOffers = currentTotalOffers;
+        consecutiveEmptyPasses = 0;
+        sustainedBottomPasses = 0;
+      }
 
       if (buttons.length > 0) {
         consecutiveEmptyPasses = 0;
+        sustainedBottomPasses = 0;
 
         if (currentStrategy === 'instant') {
           // ⚡ Instant / Safe Auto-Pacer Mode
           const isWalgreensSite = isWalgreens;
+          const isShopRiteSite = isShopRite;
           updateStatus(
             isWalgreensSite 
               ? \`🛡️ Safe Auto-Pacer: Loading \${buttons.length} offers safely... (\${aggregateClipped || localClipped} clipped)\`
@@ -1662,26 +2124,56 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           for (const btn of buttons) {
             if (shouldStop) break;
             try {
+              // Check if button text or state already transitioned to Loaded
+              const currText = (btn.textContent || btn.innerText || '').trim().toLowerCase();
+              if (currText.includes('loaded') || currText.includes('clipped') || currText.includes('saved') || currText.includes('added') || btn.getAttribute('aria-pressed') === 'true') {
+                btn.setAttribute('data-cs-processed', 'true');
+                processedElements.add(btn);
+                continue;
+              }
+
               btn.setAttribute('data-cs-processed', 'true');
               processedElements.add(btn);
+
+              // Bring coupon into view inside the inner COUPON WINDOW (not outer window)
+              const couponWin = findCouponWindow([btn]);
+              if (couponWin && couponWin !== document.body && couponWin !== document.documentElement) {
+                const btnRect = btn.getBoundingClientRect();
+                const containerRect = couponWin.getBoundingClientRect();
+                if (btnRect.top < containerRect.top + 40 || btnRect.bottom > containerRect.bottom - 40) {
+                  const offset = btnRect.top - containerRect.top - (containerRect.height / 2) + (btnRect.height / 2);
+                  couponWin.scrollBy({ top: offset, behavior: 'smooth' });
+                  couponWin.dispatchEvent(new Event('scroll', { bubbles: true }));
+                }
+              }
 
               const rawTitle = btn.getAttribute('data-title') || btn.getAttribute('aria-label') || (btn.innerText || '').trim();
               const cleanTitle = rawTitle.slice(0, 32);
 
-              if (isWalgreensSite) {
+              if (isWalgreensSite || isShopRiteSite) {
                 btn.style.outline = '2px solid #0f172a';
               }
 
               safeStealthClick(btn);
 
-              // On Walgreens: Wait for server response / button state transition
-              if (isWalgreensSite) {
+              // On Walgreens & ShopRite: Wait for server response / button state transition ("Loaded" / "Clipped")
+              if (isWalgreensSite || isShopRiteSite) {
                 updateStatus(\`⏳ Loading offer: \${cleanTitle}... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await waitForCouponConfirmation(btn, 1800);
+                await waitForCouponConfirmation(btn, isWalgreensSite ? 1800 : 1200);
                 btn.style.outline = '';
               }
 
               localClipped++;
+
+              if (!isTopFrame) {
+                try {
+                  window.parent.postMessage({
+                    type: 'CS_COUPON_CLIPPED_FROM_CHILD',
+                    count: 1,
+                    title: cleanTitle
+                  }, '*');
+                } catch (e) {}
+              }
 
               try {
                 chrome.runtime.sendMessage({
@@ -1761,21 +2253,31 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         } else {
           // 🎬 Step-by-Step Mode: Smooth scroll & visual glide
           const isWalgreensSite = isWalgreens;
+          const isShopRiteSite = isShopRite;
           for (const btn of buttons) {
             if (shouldStop) break;
 
             try {
+              // Check if button text or state already transitioned to Loaded
+              const currText = (btn.textContent || btn.innerText || '').trim().toLowerCase();
+              if (currText.includes('loaded') || currText.includes('clipped') || currText.includes('saved') || currText.includes('added') || btn.getAttribute('aria-pressed') === 'true') {
+                btn.setAttribute('data-cs-processed', 'true');
+                processedElements.add(btn);
+                continue;
+              }
+
               btn.setAttribute('data-cs-processed', 'true');
               processedElements.add(btn);
 
-              const containers = findScrollContainers([btn]);
-              if (containers.length > 0) {
-                const container = containers[0];
+              // Bring coupon into view inside the COUPON WINDOW (not outer window)
+              const couponWin = findCouponWindow([btn]);
+              if (couponWin && couponWin !== document.body && couponWin !== document.documentElement) {
                 const btnRect = btn.getBoundingClientRect();
-                const containerRect = container.getBoundingClientRect();
-                if (btnRect.top < containerRect.top + 30 || btnRect.bottom > containerRect.bottom - 30) {
+                const containerRect = couponWin.getBoundingClientRect();
+                if (btnRect.top < containerRect.top + 40 || btnRect.bottom > containerRect.bottom - 40) {
                   const offset = btnRect.top - containerRect.top - (containerRect.height / 2) + (btnRect.height / 2);
-                  container.scrollBy({ top: offset, behavior: 'smooth' });
+                  couponWin.scrollBy({ top: offset, behavior: 'smooth' });
+                  couponWin.dispatchEvent(new Event('scroll', { bubbles: true }));
                 }
               } else {
                 try {
@@ -1796,13 +2298,23 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
               safeStealthClick(btn);
 
-              // On Walgreens: Wait for server response / button state transition
-              if (isWalgreensSite) {
+              // On Walgreens & ShopRite: Wait for server response / button state transition ("Loaded" / "Clipped")
+              if (isWalgreensSite || isShopRiteSite) {
                 updateStatus(\`⏳ Loading offer: \${cleanTitle}... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await waitForCouponConfirmation(btn, 1800);
+                await waitForCouponConfirmation(btn, isWalgreensSite ? 1800 : 1200);
               }
 
               localClipped++;
+
+              if (!isTopFrame) {
+                try {
+                  window.parent.postMessage({
+                    type: 'CS_COUPON_CLIPPED_FROM_CHILD',
+                    count: 1,
+                    title: cleanTitle
+                  }, '*');
+                } catch (e) {}
+              }
 
               try {
                 chrome.runtime.sendMessage({
@@ -1878,12 +2390,8 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           }
         }
 
-        const scrollContainers = findScrollContainers(buttons);
-        if (scrollContainers.length > 0) {
-          scrollContainers[0].scrollBy({ top: CONFIG.scrollStep, behavior: 'smooth' });
-        } else {
-          window.scrollBy({ top: CONFIG.scrollStep, behavior: 'smooth' });
-        }
+        // Advance the COUPON WINDOW between batches (not the outer window)
+        scrollCouponWindow(CONFIG.scrollStep, buttons);
         await sleep(CONFIG.scrollDelay);
         continue;
       }
@@ -1896,53 +2404,150 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           loadMoreBtn.style.outline = '3px solid #0f172a';
           await sleep(250);
           safeStealthClick(loadMoreBtn);
-          await sleep(2200);
+          await sleep(2000);
           loadMoreBtn.style.outline = '';
         } catch (e) {}
         consecutiveEmptyPasses = 0;
+        sustainedBottomPasses = 0;
         continue;
       }
 
-      // Infinite scroll agitation
-      consecutiveEmptyPasses++;
-      updateStatus(
-        \`Scanning for next coupon batch... (\${aggregateClipped || localClipped} clipped) [\${consecutiveEmptyPasses}/\${MAX_EMPTY_PASSES}]\`,
-        aggregateClipped || localClipped
-      );
+      // Infinite scroll / lazy loading progression
+      const newlyLoaded = aggregateClipped || localClipped;
+      const isStepMode = (currentStrategy !== 'instant');
 
-      const scrollContainers = findScrollContainers([]);
-      if (scrollContainers.length > 0) {
-        const activeContainer = scrollContainers[0];
-        activeContainer.scrollBy({ top: CONFIG.scrollStep + 200, behavior: 'smooth' });
-        activeContainer.dispatchEvent(new Event('scroll', { bubbles: true }));
-        await sleep(CONFIG.scrollDelay);
-        
-        activeContainer.scrollBy({ top: -100, behavior: 'smooth' });
-        await sleep(150);
-        activeContainer.scrollBy({ top: 150, behavior: 'smooth' });
+      if (isStepMode) {
+        // Step-by-Step Mode: Glides smoothly down through loaded offers to trigger next batch
+        updateStatus(
+          \`Gliding through loaded offers... (\${currentLoadedCount} on card)\`,
+          newlyLoaded
+        );
+        if (!isTopFrame) {
+          try {
+            window.parent.postMessage({
+              type: 'CS_PROGRESS_FROM_CHILD',
+              status: \`Gliding through loaded offers... (\${currentLoadedCount} on card)\`,
+              count: newlyLoaded
+            }, '*');
+          } catch (e) {}
+        }
+        scrollCouponWindow(450);
+        await sleep(CONFIG.glideDelay + 250);
       } else {
-        window.scrollBy({ top: CONFIG.scrollStep + 200, behavior: 'smooth' });
-        window.dispatchEvent(new Event('scroll', { bubbles: true }));
-        await sleep(CONFIG.scrollDelay);
+        // Batch Mode: Rapidly scrolls down the coupon container to trigger next batch
+        updateStatus(
+          \`Scrolling to load more offers... (\${currentLoadedCount} on card)\`,
+          newlyLoaded
+        );
+        if (!isTopFrame) {
+          try {
+            window.parent.postMessage({
+              type: 'CS_PROGRESS_FROM_CHILD',
+              status: \`Scrolling to load more offers... (\${currentLoadedCount} on card)\`,
+              count: newlyLoaded
+            }, '*');
+          } catch (e) {}
+        }
+        scrollCouponWindow(CONFIG.scrollStep + 350);
+        await sleep(CONFIG.scrollDelay + 200);
+      }
+
+      // Allow 450ms for lazy load network request and Angular change detection
+      await sleep(450);
+
+      // Check if new coupons populated immediately after scrolling
+      const freshButtons = findUnclippedButtons();
+      const freshLoaded = countLoadedCoupons();
+      const freshTotal = freshButtons.length + freshLoaded;
+      if (freshTotal > currentTotalOffers) {
+        console.log(\`[CouponSweep] New coupons populated after scroll: \${currentTotalOffers} -> \${freshTotal}\`);
+        lastTotalOffers = freshTotal;
+        consecutiveEmptyPasses = 0;
+        sustainedBottomPasses = 0;
+        continue;
+      }
+
+      // No new coupons populated on this scroll: evaluate bottom state
+      consecutiveEmptyPasses++;
+      const couponWin = findCouponWindow();
+      const isAtBottom = isScrollAtBottom(couponWin);
+
+      if (isAtBottom) {
+        sustainedBottomPasses++;
+        console.log(\`[CouponSweep] Reached candidate bottom (\${sustainedBottomPasses}/\${REQUIRED_BOTTOM_PASSES}). Total offers: \${currentTotalOffers}\`);
         
-        window.scrollBy({ top: -100, behavior: 'smooth' });
-        await sleep(150);
-        window.scrollBy({ top: 150, behavior: 'smooth' });
+        // Gentle nudge to ensure the bottom sentinel IntersectionObserver is triggered
+        scrollCouponWindow(120);
+        await sleep(650);
+
+        if (sustainedBottomPasses >= REQUIRED_BOTTOM_PASSES) {
+          console.log(\`[CouponSweep] Verified absolute bottom of coupon section. All \${currentTotalOffers} coupons processed.\`);
+          break;
+        }
+      } else {
+        sustainedBottomPasses = 0;
       }
 
       if (consecutiveEmptyPasses >= MAX_EMPTY_PASSES) {
-        console.log(\`Exhausted all passes. All available \${retailerName} coupons processed.\`);
+        console.log(\`[CouponSweep] Completed full coupon scan. All \${currentTotalOffers} offers processed.\`);
         break;
       }
     }
 
     isRunning = false;
     const finalCount = aggregateClipped || localClipped;
+    const finalLoadedCount = countLoadedCoupons();
+
+    if (finalCount === 0 && finalLoadedCount > 0) {
+      console.log(\`🎉 All \${finalLoadedCount} coupons verified loaded to \${programName} card!\`);
+      updateStatus(
+        'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.',
+        0
+      );
+
+      if (!isTopFrame) {
+        try {
+          window.parent.postMessage({
+            type: 'CS_CLIPPER_FINISHED_FROM_CHILD',
+            count: 0,
+            loadedCount: finalLoadedCount,
+            allAlreadyLoaded: true
+          }, '*');
+        } catch (e) {}
+      } else {
+        showCompletionBanner(0, false, true);
+      }
+
+      try {
+        chrome.runtime.sendMessage({
+          type: 'CS_CLIPPER_FINISHED',
+          clipped: 0,
+          loadedCount: finalLoadedCount,
+          allAlreadyLoaded: true,
+          stopped: shouldStop
+        });
+      } catch (e) {}
+      return;
+    }
+
+    if (!isTopFrame) {
+      try {
+        window.parent.postMessage({
+          type: 'CS_CLIPPER_FINISHED_FROM_CHILD',
+          count: finalCount,
+          loadedCount: finalLoadedCount,
+          allAlreadyLoaded: false
+        }, '*');
+      } catch (e) {}
+    } else {
+      showCompletionBanner(finalCount, false, false);
+    }
 
     try {
       chrome.runtime.sendMessage({
         type: 'CS_CLIPPER_FINISHED',
         clipped: finalCount,
+        loadedCount: finalLoadedCount,
         stopped: shouldStop
       });
     } catch (e) {}
@@ -2056,12 +2661,20 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         try { sessionStorage.setItem('__cs_login_override', 'true'); } catch (err) {}
       }
       if (message.mode) currentStrategy = message.mode;
-      if (!isRunning) {
-        startLoader(message.mode);
-        sendResponse({ success: true, message: 'Loader started in mode: ' + currentStrategy });
-      } else {
-        sendResponse({ success: false, message: 'Already running' });
-      }
+
+      // Close previous completion banner if open
+      const prevBanner = document.getElementById('cs-completion-banner');
+      if (prevBanner) prevBanner.remove();
+
+      // Always reset running flags on explicit user start so repeated runs work smoothly
+      isRunning = false;
+      shouldStop = false;
+      activeCouponWindow = null;
+      nonScrollableBlacklist.clear();
+
+      startLoader(message.mode || currentStrategy);
+      sendResponse({ success: true, message: 'Loader started in mode: ' + currentStrategy });
+      return true;
     } else if (message.type === 'CS_STOP' || message.type === 'CS_STOP_BROADCAST') {
       stopLoader();
       sendResponse({ success: true, message: 'Stopping...' });
@@ -2081,21 +2694,22 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       isRunning = false;
       const count = message.totalClipped ?? (aggregateClipped || localClipped);
       const isUpToDate = message.allAlreadyLoaded || (count === 0 && !message.stopped);
+      const newlyLoaded = isUpToDate ? 0 : count;
       let finalMsg = '';
 
       if (message.stopped) {
         finalMsg = \`⏹️ Stopped! Clipped \${count} coupons to your account.\`;
       } else if (isUpToDate) {
-        finalMsg = \`✅ Up to date — all coupons are loaded to your \${programName} card.\`;
+        finalMsg = 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.';
       } else {
         finalMsg = \`🎉 All Done! Successfully clipped \${count} coupons to your \${retailerName} account!\`;
       }
 
       csLog(\`Completion: \${finalMsg}\`);
-      updateStatus(finalMsg, isUpToDate ? 'Up to Date' : count);
+      updateStatus(finalMsg, newlyLoaded);
 
       if (isTopFrame) {
-        showCompletionBanner(count, message.stopped, isUpToDate);
+        showCompletionBanner(newlyLoaded, message.stopped, isUpToDate);
         const indicator = document.getElementById('cs-hud-indicator');
         if (indicator) {
           indicator.style.background = '#10b981';
@@ -2138,9 +2752,10 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     <div id="retailer-banner" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11px;">
       <div style="display: flex; align-items: center; gap: 6px;">
         <span id="retailer-icon" style="font-size: 13px;">🛒</span>
-        <span id="retailer-name" style="font-weight: 800; color: #0f172a;">ShopRite, Walgreens, Family Dollar, CVS, Kroger</span>
+        <span id="retailer-name" style="font-weight: 800; color: #0f172a;">Publix, ShopRite, Walgreens, CVS, Kroger, Family Dollar</span>
       </div>
       <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+        <button id="btn-switch-publix" class="btn-micro" title="Quick launch Publix digital coupons">Publix</button>
         <button id="btn-switch-shoprite" class="btn-micro" title="Quick launch ShopRite digital coupons">ShopRite</button>
         <button id="btn-switch-walgreens" class="btn-micro" title="Quick launch Walgreens digital coupons">Walgreens</button>
         <button id="btn-switch-familydollar" class="btn-micro" title="Quick launch Family Dollar digital coupons">Family Dollar</button>
@@ -2523,15 +3138,17 @@ body {
 }
 `;
 
-  const popupJs = `// CouponSweep Digital Coupon Loader - Popup Script (ShopRite, Walgreens, Family Dollar, CVS, Kroger)
+  const popupJs = `// CouponSweep Digital Coupon Loader - Popup Script (ShopRite, Walgreens, Family Dollar, CVS, Kroger, Publix)
 const SHOPRITE_URL = "${shopriteUrl}";
 const WALGREENS_URL = "${walgreensUrl}";
 const DEFAULT_URL = "${config.targetUrl || shopriteUrl}";
 const CVS_URL = "${cvsUrl}";
 const KROGER_URL = "${krogerUrl}";
+const PUBLIX_URL = "${publixUrl}";
 
 function detectRetailer(url = '') {
   const lower = url.toLowerCase();
+  if (lower.includes('publix.com')) return 'publix';
   if (lower.includes('familydollar.com')) return 'familydollar';
   if (lower.includes('walgreens.com')) return 'walgreens';
   if (lower.includes('shoprite.com') || lower.includes('wakefern.com') || lower.includes('priceplus')) return 'shoprite';
@@ -2542,6 +3159,10 @@ function detectRetailer(url = '') {
 
 function resolveTargetUrl(tabUrl = '', targetRetailer = null) {
   const r = targetRetailer || detectRetailer(tabUrl);
+  if (r === 'publix') {
+    if (tabUrl.includes('publix.com/savings/digital-coupons') || tabUrl.includes('publix.com')) return tabUrl.includes('coupons') ? tabUrl : PUBLIX_URL;
+    return PUBLIX_URL;
+  }
   if (r === 'familydollar') {
     return 'https://www.familydollar.com/smart-coupons';
   }
@@ -2656,6 +3277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       retailerNameEl.textContent = 'Kroger (Shopper\\'s Card)';
     } else if (currentR === 'cvs') {
       retailerNameEl.textContent = 'CVS (ExtraCare®)';
+    } else if (currentR === 'publix') {
+      retailerNameEl.textContent = 'Publix (Club Publix)';
     } else {
       retailerNameEl.textContent = 'CouponSweep — Multi-Store';
     }
@@ -2667,7 +3290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setRunning(true);
             statCount.textContent = res.clipped || 0;
           } else if (res.isLoggedOut) {
-            showLoginRequiredStatus(currentR === 'walgreens' ? 'Walgreens' : (currentR === 'cvs' ? 'CVS' : (currentR === 'kroger' ? 'Kroger' : 'ShopRite')));
+            showLoginRequiredStatus(currentR === 'walgreens' ? 'Walgreens' : (currentR === 'cvs' ? 'CVS' : (currentR === 'kroger' ? 'Kroger' : (currentR === 'publix' ? 'Publix' : 'ShopRite'))));
           } else if (res.allAlreadyLoaded || (res.clipped === 0 && res.loadedCount > 0)) {
             showUpToDateStatus();
           } else if (res.clipped > 0) {
@@ -2677,6 +3300,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     }
+  }
+
+  const btnSwitchPublix = document.getElementById('btn-switch-publix');
+  if (btnSwitchPublix) {
+    btnSwitchPublix.addEventListener('click', () => {
+      activeRetailerOverride = 'publix';
+      retailerNameEl.textContent = 'Publix (Club Publix)';
+      triggerClip('instant', 'publix');
+    });
   }
 
   if (btnSwitchShoprite) {
@@ -2733,11 +3365,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       (currentTab.url.includes("coupon") || currentTab.url.includes("offers") || currentTab.url.includes("savings") || currentTab.url.includes("circular"));
 
     if (isAlreadyOnCoupons) {
-      await chrome.scripting.executeScript({
-        target: { tabId: currentTab.id, allFrames: targetRetailer === 'shoprite' },
-        files: ['content.js']
-      });
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: currentTab.id, allFrames: true },
+          files: ['content.js']
+        });
+      } catch (e) {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: currentTab.id },
+            files: ['content.js']
+          });
+        } catch (err) {}
+      }
+
       chrome.tabs.sendMessage(currentTab.id, { type: 'CS_START', mode: mode });
+      if (chrome.webNavigation && chrome.webNavigation.getAllFrames) {
+        chrome.webNavigation.getAllFrames({ tabId: currentTab.id }, (frames) => {
+          if (frames) {
+            frames.forEach(f => {
+              if (f.frameId !== 0) {
+                chrome.tabs.sendMessage(currentTab.id, { type: 'CS_START', mode: mode }, { frameId: f.frameId }).catch(() => {});
+              }
+            });
+          }
+        });
+      }
     } else {
       chrome.runtime.sendMessage({
         type: 'CS_TRIGGER_MODE',
@@ -2770,11 +3423,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnOverrideLogin.style.display = 'none';
       statusMessage.textContent = '⚡ Overriding login check & starting clip...';
       const targetRetailer = activeRetailerOverride || detectRetailer(currentTab.url);
-      await chrome.scripting.executeScript({
-        target: { tabId: currentTab.id, allFrames: targetRetailer === 'shoprite' },
-        files: ['content.js']
-      });
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: currentTab.id, allFrames: true },
+          files: ['content.js']
+        });
+      } catch (e) {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: currentTab.id },
+            files: ['content.js']
+          });
+        } catch (err) {}
+      }
+
       chrome.tabs.sendMessage(currentTab.id, { type: 'CS_OVERRIDE_LOGIN', mode: 'instant' });
+      if (chrome.webNavigation && chrome.webNavigation.getAllFrames) {
+        chrome.webNavigation.getAllFrames({ tabId: currentTab.id }, (frames) => {
+          if (frames) {
+            frames.forEach(f => {
+              if (f.frameId !== 0) {
+                chrome.tabs.sendMessage(currentTab.id, { type: 'CS_OVERRIDE_LOGIN', mode: 'instant' }, { frameId: f.frameId }).catch(() => {});
+              }
+            });
+          }
+        });
+      }
       setTimeout(() => {
         try { window.close(); } catch (e) {}
       }, 150);
