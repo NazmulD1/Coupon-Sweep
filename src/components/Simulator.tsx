@@ -126,102 +126,92 @@ const SHOPRITE_COUPONS: CouponItem[] = [
 const WALGREENS_COUPONS: CouponItem[] = [
   {
     id: 'wg1',
-    brand: "L'Oréal Paris",
-    title: "Save $2.00 on any ONE (1) L'Oréal Paris Elvive haircare or Advanced Hairstyle product",
-    discount: 'Clip $2.00 off',
-    category: 'Beauty & Personal Care',
-    expiration: 'Expires: 09/28/2026',
-    buttonLabel: 'Clip',
+    brand: 'myW exclusive',
+    title: 'Multi use offer valid online only',
+    discount: 'Earn $5 W Cash rewards on $20+...',
+    category: 'Rewards & Exclusives',
+    expiration: 'Expires Oct 4, 2026',
+    buttonLabel: 'Clip rebate',
     isClipped: false,
-    imageColor: '#dc2626',
-    badges: ['myWalgreens', 'Top Deal'],
+    imageColor: '#1e293b',
+    badges: ['myW exclusive', '$5 Cash'],
     retailer: 'walgreens'
   },
   {
     id: 'wg2',
-    brand: 'Walgreens Health',
-    title: 'Save $3.00 on Walgreens Brand Ibuprofen or Acetaminophen 500ct Pain Reliever',
-    discount: 'Clip $3.00 off',
+    brand: 'Wonderbelly®',
+    title: 'ONE Wonderbelly® Product',
+    discount: '$3 off 1',
     category: 'Health & Wellness',
-    expiration: 'Expires: 10/05/2026',
+    expiration: 'Expires Oct 4, 2026',
     buttonLabel: 'Clip',
     isClipped: false,
-    imageColor: '#2563eb',
-    badges: ['Store Coupon', 'Earn $5 Cash'],
+    imageColor: '#ec4899',
+    badges: ['Only for you'],
     retailer: 'walgreens'
   },
   {
     id: 'wg3',
-    brand: 'Gillette',
-    title: 'Save $4.00 on Gillette Fusion5 or Venus Razor or Refills Cartridges 4ct+',
-    discount: 'Clip $4.00 off',
-    category: 'Personal Care',
-    expiration: 'Expires: 09/24/2026',
+    brand: 'Olay®',
+    title: 'TWO Olay® Facial Moisturizer, Eye or Serum Products (excludes Olay Complete, Active Hydrating, Cleanser and trial/travel size).',
+    discount: '$5 off 2',
+    category: 'Beauty & Personal Care',
+    expiration: 'Expires Oct 4, 2026',
     buttonLabel: 'Clip',
     isClipped: false,
-    imageColor: '#0284c7',
-    badges: ['myWalgreens'],
-    retailer: 'walgreens'
-  },
-  {
-    id: 'wg4',
-    brand: 'Nature Made',
-    title: 'Buy 1, Get 1 FREE on Nature Made Vitamins & Dietary Supplements',
-    discount: 'Clip BOGO Free',
-    category: 'Vitamins & Supplements',
-    expiration: 'Expires: 09/30/2026',
-    buttonLabel: 'Clip offer',
-    isClipped: false,
-    imageColor: '#f59e0b',
-    badges: ['BOGO Free', 'Earn $10 Cash'],
-    retailer: 'walgreens'
-  },
-  {
-    id: 'wg5',
-    brand: 'Crest',
-    title: 'Save $2.00 on Crest 3D White or Pro-Health Toothpaste 3.0oz+',
-    discount: 'Clip $2.00 off',
-    category: 'Personal Care',
-    expiration: 'Expires: 09/26/2026',
-    buttonLabel: 'Clip coupon',
-    isClipped: false,
-    imageColor: '#059669',
+    imageColor: '#7c3aed',
     badges: ['Top Deal'],
     retailer: 'walgreens'
   },
   {
-    id: 'wg6',
-    brand: 'Bounty',
-    title: 'Save $1.50 on Bounty Paper Towels 6 Double Rolls or Essentials 8ct',
-    discount: 'Clip $1.50 off',
-    category: 'Household Essentials',
-    expiration: 'Expires: 10/02/2026',
-    buttonLabel: 'Clip deal',
+    id: 'wg4',
+    brand: 'Dove',
+    title: 'Dove Bar (6 ct or larger), Body Wash (20 oz or larger), Shower Gel (20 oz), Premium Body Wash, Body Scrub...',
+    discount: '$2 off 1',
+    category: 'Beauty & Personal Care',
+    expiration: 'Expires Oct 4, 2026',
+    buttonLabel: 'Clip',
+    isClipped: false,
+    imageColor: '#0284c7',
+    badges: ['Personal Care'],
+    retailer: 'walgreens'
+  },
+  {
+    id: 'wg5',
+    brand: 'Neutrogena',
+    title: 'ONE (1) Neutrogena Makeup Remover Wipes, Liquid Cleanser or Moisturizer',
+    discount: '$3 off 1',
+    category: 'Beauty & Skincare',
+    expiration: 'Expires Oct 11, 2026',
+    buttonLabel: 'Clip',
     isClipped: false,
     imageColor: '#16a34a',
     badges: ['Weekly Deal'],
     retailer: 'walgreens'
   },
   {
-    id: 'wg7',
-    brand: 'Nice! (Walgreens)',
-    title: 'Save $1.00 on Nice! Organic Cashews, Almonds or Trail Mix 8-16oz',
-    discount: 'Clip $1.00 off',
-    category: 'Food & Beverage',
-    expiration: 'Expires: 09/29/2026',
-    buttonLabel: 'Clip',
+    id: 'wg6',
+    brand: 'Crest®',
+    title: 'TWO Crest 3D White, Pro-Health, or Complete Toothpastes 2.7 oz or larger',
+    discount: '$3 off 2 via Rebate',
+    category: 'Oral Care',
+    expiration: 'Expires Oct 18, 2026',
+    buttonLabel: 'Clip rebate',
     isClipped: false,
-    imageColor: '#d97706',
-    badges: ['Earn Cash'],
+    imageColor: '#9333ea',
+    badges: ['Rebate Deal'],
     retailer: 'walgreens'
-  },
+  }
+];
+
+const EXTRA_WALGREENS_COUPONS: CouponItem[] = [
   {
-    id: 'wg8',
-    brand: 'CeraVe',
-    title: 'Save $3.00 on CeraVe Moisturizing Cream, Daily Lotion or Hydrating Cleanser',
-    discount: 'Clip $3.00 off',
+    id: 'wg7',
+    brand: 'CeraVe Skincare',
+    title: 'Save $3.00 on any ONE (1) CeraVe Skincare Product (excludes trial sizes and 1 oz. bar)',
+    discount: '$3 off 1',
     category: 'Beauty & Personal Care',
-    expiration: 'Expires: 10/01/2026',
+    expiration: 'Expires 10/15/26',
     buttonLabel: 'Clip',
     isClipped: false,
     imageColor: '#0284c7',
@@ -229,16 +219,68 @@ const WALGREENS_COUPONS: CouponItem[] = [
     retailer: 'walgreens'
   },
   {
-    id: 'wg9',
-    brand: 'Tide Simply',
-    title: 'Save $0.50 on Tide Simply Clean & Fresh Liquid Laundry Detergent 31oz',
-    discount: 'Clip $0.50 off',
+    id: 'wg8',
+    brand: 'Tide PODS Detergent',
+    title: 'Save $2.00 on ONE Tide PODS Laundry Detergent 23-42 ct or Liquid 59-88 oz',
+    discount: '$2 off 1',
     category: 'Household Essentials',
-    expiration: 'Expires: 09/27/2026',
-    buttonLabel: 'Clip to card',
+    expiration: 'Expires 10/20/26',
+    buttonLabel: 'Clip',
     isClipped: false,
     imageColor: '#ea580c',
-    badges: ['Weekly Deal'],
+    badges: ['myWalgreens'],
+    retailer: 'walgreens'
+  },
+  {
+    id: 'wg9',
+    brand: 'Huggies Diapers',
+    title: '$3.00 off 1 Huggies Little Snugglers or Little Movers Diapers via Cash Rebate',
+    discount: '$3 off 1 via Rebate',
+    category: 'Baby Care',
+    expiration: 'Expires 10/25/26',
+    buttonLabel: 'Clip rebate',
+    isClipped: false,
+    imageColor: '#db2777',
+    badges: ['Cash Rebate'],
+    retailer: 'walgreens'
+  },
+  {
+    id: 'wg10',
+    brand: 'Colgate Total',
+    title: '$4.00 off 2 Colgate Total, Optic White, or Max Fresh Toothpaste 3 oz+',
+    discount: '$4 off 2',
+    category: 'Personal Care',
+    expiration: 'Expires 10/18/26',
+    buttonLabel: 'Clip',
+    isClipped: false,
+    imageColor: '#dc2626',
+    badges: ['Top Deal'],
+    retailer: 'walgreens'
+  },
+  {
+    id: 'wg11',
+    brand: 'Nature Made Vitamins',
+    title: 'Buy 1, Get 1 FREE on Nature Made Vitamins & Dietary Supplements',
+    discount: 'BOGO Free',
+    category: 'Vitamins & Supplements',
+    expiration: 'Expires 10/28/26',
+    buttonLabel: 'Clip offer',
+    isClipped: false,
+    imageColor: '#f59e0b',
+    badges: ['BOGO Free'],
+    retailer: 'walgreens'
+  },
+  {
+    id: 'wg12',
+    brand: 'Scott Paper Towels',
+    title: '$1.25 off 1 Scott Bath Tissue 12 rolls or Scott Paper Towels 6 rolls',
+    discount: '$1.25 off 1',
+    category: 'Household Essentials',
+    expiration: 'Expires 10/22/26',
+    buttonLabel: 'Clip',
+    isClipped: false,
+    imageColor: '#2563eb',
+    badges: ['Weekly Ad'],
     retailer: 'walgreens'
   }
 ];
@@ -247,105 +289,131 @@ const FAMILYDOLLAR_COUPONS: CouponItem[] = [
   {
     id: 'fd1',
     brand: 'Family Dollar',
-    title: 'Save $5.00 OFF your purchase of $25.00 or more STOREWIDE!',
-    discount: 'Save $5.00',
+    title: '$5.00 OFF your purchase of $25.00 or more STOREWIDE!',
+    discount: 'Save $5',
     category: 'Storewide',
-    expiration: 'Expires: Sep 20',
+    expiration: 'Expires: Oct 01',
     buttonLabel: 'CLIP COUPON',
-    isClipped: false,
-    imageColor: '#dc2626',
-    badges: ['Storewide', 'Weekly Ad'],
+    isClipped: true,
+    imageColor: '#ea580c',
+    badges: ['Wed. 9/30 Only!'],
     retailer: 'familydollar'
   },
   {
     id: 'fd2',
-    brand: 'Family Dollar',
-    title: 'SAVE $5 on your purchase of $25 or more storewide! (Wed. 9/16 Only!)',
-    discount: 'Save $5.00',
-    category: 'Storewide',
-    expiration: 'Expires: Sep 17',
+    brand: 'Pampers',
+    title: 'Diapers, Baby Wipes, or Training Pants',
+    discount: 'Save $7',
+    category: 'Baby & Child Care',
+    expiration: 'Expires: Oct 05',
     buttonLabel: 'CLIP COUPON',
-    isClipped: false,
-    imageColor: '#ea580c',
-    badges: ['Wed. 9/16 Only!'],
+    isClipped: true,
+    imageColor: '#0284c7',
+    badges: ['EXPIRES SOON'],
     retailer: 'familydollar'
   },
   {
     id: 'fd3',
-    brand: 'Cutter Backwoods',
-    title: 'Cutter® Backwoods Insect Repellent Aerosol Spray',
-    discount: 'Save $3.00',
-    category: 'Outdoor & Pest',
-    expiration: 'Expires: Sep 30',
+    brand: 'Angel Soft',
+    title: 'Angel Soft® Bath Tissue',
+    discount: 'Save $1',
+    category: 'Household & Paper',
+    expiration: 'Expires: Oct 08',
     buttonLabel: 'CLIP COUPON',
-    isClipped: false,
-    imageColor: '#16a34a',
-    badges: ['BUY 2'],
+    isClipped: true,
+    imageColor: '#0ea5e9',
+    badges: [],
     retailer: 'familydollar'
   },
   {
     id: 'fd4',
-    brand: 'Repel Sportsmen',
-    title: 'Repel® Sportsmen Max Formula Insect Repellent',
-    discount: 'Save $3.00',
-    category: 'Outdoor & Pest',
-    expiration: 'Expires: Sep 30',
+    brand: 'OxiClean',
+    title: 'OxiClean™ Versatile Stain Remover Powder or Laundry Stain Remover Spray',
+    discount: 'Save $2',
+    category: 'Laundry Care',
+    expiration: 'Expires: Oct 12',
     buttonLabel: 'CLIP COUPON',
     isClipped: false,
-    imageColor: '#2563eb',
-    badges: ['BUY 2'],
+    imageColor: '#eab308',
+    badges: ['Popular'],
     retailer: 'familydollar'
   },
   {
     id: 'fd5',
-    brand: 'Pure Life',
-    title: 'Pure Life® Purified Water 24pk',
-    discount: 'Save $1.00',
-    category: 'Food & Beverage',
-    expiration: 'Expires: Sep 25',
+    brand: 'Fabuloso',
+    title: 'Fabuloso Multi-Purpose Cleaner',
+    discount: 'Save $1',
+    category: 'Cleaning Supplies',
+    expiration: 'Expires: Oct 12',
     buttonLabel: 'CLIP COUPON',
     isClipped: false,
-    imageColor: '#0284c7',
-    badges: ['BUY 2'],
+    imageColor: '#db2777',
+    badges: [],
     retailer: 'familydollar'
   },
   {
     id: 'fd6',
-    brand: 'Degree & Axe',
-    title: 'Save $2.00 on Degree or Axe Deodorant Body Spray 2-Pack',
-    discount: 'Save $2.00',
-    category: 'Personal Care',
-    expiration: 'Expires: Sep 28',
+    brand: 'CHIPS AHOY!',
+    title: 'CHIPS AHOY! Limited Edition',
+    discount: 'Save $2',
+    category: 'Snacks & Cookies',
+    expiration: 'Expires: Oct 15',
     buttonLabel: 'CLIP COUPON',
     isClipped: false,
-    imageColor: '#7c3aed',
-    badges: ['Top Deal'],
+    imageColor: '#1e293b',
+    badges: [],
     retailer: 'familydollar'
   },
   {
     id: 'fd7',
-    brand: 'Tide / Gain',
-    title: 'Save $3.00 on Tide or Gain Liquid Laundry Detergent 92oz or Pods 42ct',
-    discount: 'Save $3.00',
-    category: 'Household',
-    expiration: 'Expires: Oct 02',
+    brand: 'ARM & HAMMER',
+    title: 'ARM & HAMMER™ Liquid Laundry Detergent',
+    discount: 'Save $2',
+    category: 'Laundry Care',
+    expiration: 'Expires: Oct 15',
     buttonLabel: 'CLIP COUPON',
     isClipped: false,
-    imageColor: '#ea580c',
-    badges: ['Weekly Ad'],
+    imageColor: '#f59e0b',
+    badges: [],
     retailer: 'familydollar'
   },
   {
     id: 'fd8',
-    brand: 'Allerga',
-    title: 'Save $4.00 on Allegra Allergy 24hr Relief 24ct tablets',
-    discount: 'Save $4.00',
-    category: 'Health & Wellness',
-    expiration: 'Expires: Oct 05',
+    brand: 'Angel Soft / Sparkle',
+    title: 'Angel Soft®, Sparkle®, Brawny®, or Quilted Northern®',
+    discount: 'Save $5',
+    category: 'Paper Products',
+    expiration: 'Expires: Oct 20',
     buttonLabel: 'CLIP COUPON',
     isClipped: false,
-    imageColor: '#059669',
-    badges: ['Health'],
+    imageColor: '#0284c7',
+    badges: [],
+    retailer: 'familydollar'
+  },
+  {
+    id: 'fd9',
+    brand: 'Tide',
+    title: 'Tide Laundry Detergent Downy or Pods',
+    discount: 'Save $1',
+    category: 'Laundry Care',
+    expiration: 'Expires: Oct 22',
+    buttonLabel: 'CLIP COUPON',
+    isClipped: false,
+    imageColor: '#ea580c',
+    badges: [],
+    retailer: 'familydollar'
+  },
+  {
+    id: 'fd10',
+    brand: 'Tide Febreze',
+    title: 'Tide Laundry Detergent Febreze Fresh Scent',
+    discount: 'Save $2',
+    category: 'Laundry Care',
+    expiration: 'Expires: Oct 22',
+    buttonLabel: 'CLIP COUPON',
+    isClipped: false,
+    imageColor: '#c2410c',
+    badges: [],
     retailer: 'familydollar'
   }
 ];
@@ -648,7 +716,15 @@ export function Simulator({ config }: SimulatorProps) {
   const coupons = selectedRetailer === 'publix' ? publixCoupons : selectedRetailer === 'shoprite' ? shopriteCoupons : selectedRetailer === 'walgreens' ? walgreensCoupons : selectedRetailer === 'cvs' ? cvsCoupons : selectedRetailer === 'kroger' ? krogerCoupons : familydollarCoupons;
   const setCoupons = selectedRetailer === 'publix' ? setPublixCoupons : selectedRetailer === 'shoprite' ? setShopriteCoupons : selectedRetailer === 'walgreens' ? setWalgreensCoupons : selectedRetailer === 'cvs' ? setCvsCoupons : selectedRetailer === 'kroger' ? setKrogerCoupons : setFamilydollarCoupons;
 
+  const [walgreensHasMore, setWalgreensHasMore] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
+
+  const handleLoadMoreWalgreens = () => {
+    if (!walgreensHasMore) return;
+    setWalgreensCoupons(prev => [...prev, ...EXTRA_WALGREENS_COUPONS]);
+    setWalgreensHasMore(false);
+    addLog(`📄 Loaded 6 additional Walgreens paperless offers via "Load More"! All 12 offers now available.`);
+  };
   const [isNestedWindow, setIsNestedWindow] = useState(true);
   const [activeFilter, setActiveFilter] = useState(selectedRetailer === 'publix' ? 'All Coupons (284)' : (selectedRetailer === 'shoprite' ? 'All Coupons - (254)' : 'All Offers (186)'));
   const [isRunning, setIsRunning] = useState(false);
@@ -758,6 +834,7 @@ export function Simulator({ config }: SimulatorProps) {
     abortControllerRef.current = true;
     setIsRunning(false);
     setCompletionNotice(null);
+    setWalgreensHasMore(true);
     if (selectedRetailer === 'publix') {
       setPublixCoupons(PUBLIX_COUPONS);
     } else if (selectedRetailer === 'shoprite') {
@@ -845,7 +922,7 @@ export function Simulator({ config }: SimulatorProps) {
         const allButtons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[];
         const buttons = allButtons.filter(b => {
           const text = (b.textContent || '').trim().toLowerCase();
-          const matchesKw = config.customKeywords.some(kw => text.includes(kw));
+          const matchesKw = config.customKeywords.some(kw => text.includes(kw)) || text.startsWith('clip');
           const hasCouponId = b.hasAttribute('data-coupon-id');
           return matchesKw || hasCouponId;
         });
@@ -853,13 +930,28 @@ export function Simulator({ config }: SimulatorProps) {
         const unclippedButtons = buttons.filter(b => {
           const text = (b.textContent || '').trim().toLowerCase();
           const isProcessed = b.getAttribute('data-cs-processed') === 'true';
-          const isAlreadyClipped = text.includes('loaded ✓') || text.includes('clipped ✓') || text === 'clipped' || text === 'loaded' || text === 'added';
+          const isAlreadyClipped = 
+            text.includes('loaded ✓') || text.includes('clipped ✓') || 
+            text === 'clipped' || text === 'loaded' || text === 'added' || 
+            text.includes('rebate clipped') || text.includes('clipped rebate') ||
+            text.includes('unclip') || text === 'unclip';
           const couponId = b.getAttribute('data-coupon-id');
           const coupon = couponsRef.current.find(c => c.id === couponId);
           return !isProcessed && !isAlreadyClipped && couponId && coupon && !coupon.isClipped;
         });
 
         if (unclippedButtons.length === 0) {
+          // If on Walgreens and more offers can be loaded, click Load More to load all coupons!
+          const loadMoreBtn = container.querySelector('button[data-element-name="Load More"], button.wag-load-more') as HTMLButtonElement;
+          if (loadMoreBtn && !loadMoreBtn.disabled) {
+            setCurrentActionText(`Loading all remaining ${rName} offers (Load More)...`);
+            addLog(`Found "Load More Offers" button on ${rName}. Loading next batch of coupons...`);
+            loadMoreBtn.click();
+            await sleep(650);
+            consecutiveEmptyPasses = 0;
+            continue;
+          }
+
           consecutiveEmptyPasses++;
           setCurrentActionText(`Scanning for more ${rName} offers... [${consecutiveEmptyPasses}/${MAX_EMPTY_PASSES}]`);
           container.scrollBy({ top: config.scrollStep, behavior: 'smooth' });
@@ -876,7 +968,48 @@ export function Simulator({ config }: SimulatorProps) {
         consecutiveEmptyPasses = 0;
 
         if (mode === 'instant') {
-          if (selectedRetailer === 'walgreens') {
+          if (selectedRetailer === 'familydollar') {
+            setCurrentActionText(`🛡️ Smart Coupons Anti-Bot Pacer: Loading ${unclippedButtons.length} offers safely...`);
+            for (const btn of unclippedButtons) {
+              if (abortControllerRef.current) break;
+              try {
+                const text = (btn.textContent || '').trim().toLowerCase();
+                if (text.includes('unclip') || text === 'unclip') {
+                  btn.setAttribute('data-cs-processed', 'true');
+                  continue;
+                }
+
+                btn.setAttribute('data-cs-processed', 'true');
+                const couponId = btn.getAttribute('data-coupon-id');
+                const coupon = couponsRef.current.find(c => c.id === couponId);
+
+                if (couponId && coupon && !coupon.isClipped) {
+                  btn.style.outline = '2px solid #003874';
+                  setCurrentActionText(`⏳ Smart Coupons: Clipping ${coupon.brand} - ${coupon.discount}...`);
+                  await sleep(400);
+
+                  // Server confirmation simulation: state transitions to clipped (UNCLIP)
+                  setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, isClipped: true } : c));
+                  localClipped++;
+                  setClippedCount(prev => prev + 1);
+                  addLog(`🛡️ Clipped Smart Coupon: ${coupon.brand} - ${coupon.discount} (#${localClipped})`);
+                  btn.style.outline = 'none';
+
+                  // Humanized anti-bot pacing (750ms) prevents Family Dollar rate-limit rejection
+                  await sleep(750);
+
+                  // Anti-bot breathing pause every 7 coupons
+                  if (localClipped % 7 === 0 && localClipped < unclippedButtons.length) {
+                    setCurrentActionText(`🛡️ Smart Coupons anti-bot breathing pause (preventing unclip rollback)...`);
+                    addLog(`🛡️ Anti-bot breathing cooldown: Pausing 2.2s to prevent Family Dollar server rate-limit rollback.`);
+                    await sleep(2200);
+                  }
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          } else if (selectedRetailer === 'walgreens') {
             setCurrentActionText(`🛡️ Safe Auto-Pacer: Loading ${unclippedButtons.length} offers safely...`);
             for (const btn of unclippedButtons) {
               if (abortControllerRef.current) break;
@@ -941,6 +1074,13 @@ export function Simulator({ config }: SimulatorProps) {
             if (abortControllerRef.current) break;
 
             try {
+              // Re-check unclip in Step Mode
+              const text = (btn.textContent || '').trim().toLowerCase();
+              if (text.includes('unclip') || text === 'unclip') {
+                btn.setAttribute('data-cs-processed', 'true');
+                continue;
+              }
+
               btn.setAttribute('data-cs-processed', 'true');
               const btnRect = btn.getBoundingClientRect();
               const containerRect = container.getBoundingClientRect();
@@ -963,14 +1103,16 @@ export function Simulator({ config }: SimulatorProps) {
                 setClippedCount(prev => prev + 1);
                 addLog(`✓ Clipped to ${pName} card: ${title} (#${localClipped})`);
 
-                const clickWait = selectedRetailer === 'walgreens' ? Math.max(config.clickDelay, 900) : config.clickDelay;
+                const clickWait = selectedRetailer === 'walgreens' 
+                  ? Math.max(config.clickDelay, 900) 
+                  : (selectedRetailer === 'familydollar' ? Math.max(config.clickDelay, 800) : config.clickDelay);
                 await sleep(clickWait);
                 btn.style.outline = 'none';
 
-                if (selectedRetailer === 'walgreens' && localClipped % 5 === 0 && localClipped < unclippedButtons.length) {
-                  setCurrentActionText(`🛡️ Server breathing pause (protecting from Walgreens 8-coupon lock)...`);
-                  addLog(`🛡️ Anti-bot pause: 2.5s cooldown after 5 clips to maintain clean session.`);
-                  await sleep(2500);
+                if ((selectedRetailer === 'walgreens' || selectedRetailer === 'familydollar') && localClipped % (selectedRetailer === 'walgreens' ? 5 : 7) === 0 && localClipped < unclippedButtons.length) {
+                  setCurrentActionText(`🛡️ Anti-bot breathing pause (protecting from server rate limit)...`);
+                  addLog(`🛡️ Anti-bot pause: 2.2s cooldown after ${localClipped} clips to maintain clean session.`);
+                  await sleep(2200);
                 }
               }
             } catch (e) {
@@ -1901,64 +2043,213 @@ export function Simulator({ config }: SimulatorProps) {
                       </div>
                     </div>
 
-                    <div className="pt-4 mt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
-                      <button
-                        className="py-2 px-2 text-xs font-semibold text-slate-800 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
-                        onClick={() => alert(`Viewing eligible items for ${coupon.title}`)}
-                      >
-                        Eligible Items
-                      </button>
+                    {/* Card Actions */}
+                    {selectedRetailer === 'walgreens' ? (
+                      /* Exact Walgreens Card Button Row (Matching Real Walgreens Site) */
+                      <>
+                        <div className="pt-3 mt-3 border-t border-slate-100 flex items-center gap-2">
+                        {isGuest ? (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-element-name={coupon.buttonLabel}
+                            onClick={() => handleManualClip(coupon.id)}
+                            className="w-full py-2.5 px-4 text-xs font-bold rounded-full bg-[#8b1e2e] hover:bg-[#731926] text-white transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer wag-btn-clip"
+                          >
+                            {coupon.buttonLabel}
+                          </button>
+                        ) : coupon.isClipped ? (
+                          <>
+                            <button
+                              id={`btn-load-${coupon.id}`}
+                              data-coupon-id={coupon.id}
+                              data-title={`${coupon.brand} ${coupon.discount}`}
+                              data-cs-processed="true"
+                              data-element-name="Clipped"
+                              onClick={() => handleUnclipCoupon(coupon.id)}
+                              className="flex-1 py-2.5 px-4 text-xs font-bold rounded-full bg-emerald-700 hover:bg-amber-700 text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm group"
+                              title="Click to unclip"
+                            >
+                              <span className="group-hover:hidden flex items-center gap-1">
+                                <CheckCheck className="w-3.5 h-3.5" />
+                                <span>{coupon.buttonLabel.includes('rebate') ? 'Rebate clipped ✓' : 'Clipped ✓'}</span>
+                              </span>
+                              <span className="hidden group-hover:flex items-center gap-1">
+                                <Undo2 className="w-3.5 h-3.5" />
+                                <span>Unclip</span>
+                              </span>
+                            </button>
+                            {coupon.id !== 'wg1' && (
+                              <button
+                                onClick={() => alert(`Shopping eligible products for ${coupon.title}`)}
+                                className="flex-1 py-2.5 px-4 text-xs font-bold rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-700 transition-colors cursor-pointer"
+                              >
+                                Shop
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              id={`btn-load-${coupon.id}`}
+                              data-coupon-id={coupon.id}
+                              data-title={`${coupon.brand} ${coupon.discount}`}
+                              data-element-name={coupon.buttonLabel}
+                              data-cs-processed={coupon.isClipped ? "true" : undefined}
+                              onClick={() => handleManualClip(coupon.id)}
+                              className={`py-2.5 px-4 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 text-white active:scale-95 cursor-pointer bg-[#8b1e2e] hover:bg-[#731926] wag-btn-clip ${
+                                coupon.buttonLabel.includes('rebate') ? 'wag-btn-rebate' : ''
+                              } ${coupon.id === 'wg1' ? 'w-full' : 'flex-1'}`}
+                            >
+                              {coupon.buttonLabel}
+                            </button>
+                            {coupon.id !== 'wg1' && (
+                              <button
+                                onClick={() => alert(`Shopping eligible products for ${coupon.title}`)}
+                                className="flex-1 py-2.5 px-4 text-xs font-bold rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-700 transition-colors cursor-pointer"
+                              >
+                                Shop
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {/* Walgreens card details footer matching real site */}
+                      <div className="mt-2 pt-1 flex flex-col gap-1">
+                        <a
+                          href="#details"
+                          onClick={(e) => { e.preventDefault(); alert(`Offer details for: ${coupon.title}`); }}
+                          className="text-[11px] text-[#005a9c] hover:underline font-medium inline-block"
+                        >
+                          View details
+                        </a>
+                        {coupon.id === 'wg1' && (
+                          <p className="text-[10px] text-slate-500 leading-tight">
+                            Earn $5 W Cash rewards when you spend $20 or more on eligible items.
+                          </p>
+                        )}
+                      </div>
+                      </>
+                    ) : selectedRetailer === 'familydollar' ? (
+                      /* Exact Family Dollar Smart Coupons Button Row (Full-width UNCLIP / ✂ CLIP COUPON) */
+                      <div className="pt-3 mt-3 border-t border-slate-100">
+                        {isGuest ? (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-element-name="CLIP COUPON"
+                            onClick={() => handleManualClip(coupon.id)}
+                            className="w-full py-2.5 px-3 text-xs font-bold rounded-sm border border-dashed border-slate-400 bg-white hover:bg-slate-50 text-slate-800 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer uppercase clip-coupon"
+                          >
+                            <span>✂</span>
+                            <span>CLIP COUPON</span>
+                          </button>
+                        ) : coupon.isClipped ? (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-cs-processed="true"
+                            data-element-name="UNCLIP"
+                            onClick={() => handleUnclipCoupon(coupon.id)}
+                            className="w-full py-2.5 px-3 text-xs font-bold rounded-sm bg-[#003874] hover:bg-[#002855] text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm uppercase tracking-wide unclip"
+                            title="Click to unclip"
+                          >
+                            <span>UNCLIP</span>
+                          </button>
+                        ) : (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-element-name="CLIP COUPON"
+                            data-cs-processed={coupon.isClipped ? "true" : undefined}
+                            onClick={() => handleManualClip(coupon.id)}
+                            className="w-full py-2.5 px-3 text-xs font-bold rounded-sm border border-dashed border-slate-400 bg-white hover:bg-slate-50 text-slate-800 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer uppercase clip-coupon"
+                          >
+                            <span>✂</span>
+                            <span>CLIP COUPON</span>
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      /* Other Retailers (ShopRite, Publix, CVS, Kroger, Family Dollar) */
+                      <div className="pt-4 mt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <button
+                          className="py-2 px-2 text-xs font-semibold text-slate-800 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
+                          onClick={() => alert(`Viewing eligible items for ${coupon.title}`)}
+                        >
+                          Eligible Items
+                        </button>
 
-                      {isGuest ? (
-                        <button
-                          id={`btn-load-${coupon.id}`}
-                          data-coupon-id={coupon.id}
-                          data-title={`${coupon.brand} ${coupon.discount}`}
-                          data-cs-processed={coupon.isClipped ? "true" : undefined}
-                          onClick={() => handleManualClip(coupon.id)}
-                          className="py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 bg-black text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
-                        >
-                          {label}
-                        </button>
-                      ) : coupon.isClipped ? (
-                        <button
-                          id={`btn-load-${coupon.id}`}
-                          data-coupon-id={coupon.id}
-                          data-title={`${coupon.brand} ${coupon.discount}`}
-                          data-cs-processed="true"
-                          onClick={() => handleUnclipCoupon(coupon.id)}
-                          className="group py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 bg-emerald-600 hover:bg-amber-600 text-white active:scale-95 cursor-pointer shadow-sm"
-                          title="Click to unclip"
-                        >
-                          <span className="group-hover:hidden flex items-center gap-1">
-                            <CheckCheck className="w-3.5 h-3.5" />
-                            <span>Loaded ✓</span>
-                          </span>
-                          <span className="hidden group-hover:flex items-center gap-1">
-                            <Undo2 className="w-3.5 h-3.5" />
-                            <span>Unclip</span>
-                          </span>
-                        </button>
-                      ) : (
-                        <button
-                          id={`btn-load-${coupon.id}`}
-                          data-coupon-id={coupon.id}
-                          data-title={`${coupon.brand} ${coupon.discount}`}
-                          data-cs-processed={coupon.isClipped ? "true" : undefined}
-                          onClick={() => handleManualClip(coupon.id)}
-                          data-qa={selectedRetailer === 'publix' ? 'clip-coupon' : undefined}
-                          className={`py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 text-white active:scale-95 cursor-pointer ${
-                            selectedRetailer === 'publix' ? 'bg-[#007a3d] hover:bg-[#005a2d] p-coupon__clip' : selectedRetailer === 'shoprite' ? 'bg-black hover:bg-slate-800' : selectedRetailer === 'walgreens' ? 'bg-red-600 hover:bg-red-700 wag-btn-clip' : selectedRetailer === 'cvs' ? 'bg-[#cc0000] hover:bg-red-800' : selectedRetailer === 'kroger' ? 'bg-[#00539f] hover:bg-[#003b70]' : 'bg-[#ed1c24] hover:bg-red-700 clip-coupon'
-                          }`}
-                        >
-                          {coupon.buttonLabel}
-                        </button>
-                      )}
-                    </div>
+                        {isGuest ? (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-cs-processed={coupon.isClipped ? "true" : undefined}
+                            onClick={() => handleManualClip(coupon.id)}
+                            className="py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 bg-black text-white hover:bg-slate-800 active:scale-95 cursor-pointer"
+                          >
+                            {label}
+                          </button>
+                        ) : coupon.isClipped ? (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-cs-processed="true"
+                            onClick={() => handleUnclipCoupon(coupon.id)}
+                            className="group py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 bg-emerald-600 hover:bg-amber-600 text-white active:scale-95 cursor-pointer shadow-sm"
+                            title="Click to unclip"
+                          >
+                            <span className="group-hover:hidden flex items-center gap-1">
+                              <CheckCheck className="w-3.5 h-3.5" />
+                              <span>Loaded ✓</span>
+                            </span>
+                            <span className="hidden group-hover:flex items-center gap-1">
+                              <Undo2 className="w-3.5 h-3.5" />
+                              <span>Unclip</span>
+                            </span>
+                          </button>
+                        ) : (
+                          <button
+                            id={`btn-load-${coupon.id}`}
+                            data-coupon-id={coupon.id}
+                            data-title={`${coupon.brand} ${coupon.discount}`}
+                            data-cs-processed={coupon.isClipped ? "true" : undefined}
+                            onClick={() => handleManualClip(coupon.id)}
+                            data-qa={selectedRetailer === 'publix' ? 'clip-coupon' : undefined}
+                            className={`py-2 px-2 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 text-white active:scale-95 cursor-pointer ${
+                              selectedRetailer === 'publix' ? 'bg-[#007a3d] hover:bg-[#005a2d] p-coupon__clip' : selectedRetailer === 'shoprite' ? 'bg-black hover:bg-slate-800' : selectedRetailer === 'cvs' ? 'bg-[#cc0000] hover:bg-red-800' : selectedRetailer === 'kroger' ? 'bg-[#00539f] hover:bg-[#003b70]' : 'bg-[#ed1c24] hover:bg-red-700 clip-coupon'
+                            }`}
+                          >
+                            {coupon.buttonLabel}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
+
+            {/* Load More Section for Walgreens */}
+            {selectedRetailer === 'walgreens' && walgreensHasMore && (
+              <div className="py-4 text-center border-t border-slate-100">
+                <button
+                  id="btn-load-more-walgreens"
+                  data-element-name="Load More"
+                  onClick={handleLoadMoreWalgreens}
+                  className="wag-load-more px-6 py-2.5 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-full border border-slate-300 shadow-sm hover:border-slate-500 transition-all cursor-pointer inline-flex items-center gap-2"
+                >
+                  <ArrowDown className="w-3.5 h-3.5 text-[#8b1e2e]" />
+                  <span>Load More Offers (6 More Coupons Available)</span>
+                </button>
+              </div>
+            )}
 
             <div className="text-center py-6 text-xs text-slate-400 border-t border-slate-100 flex items-center justify-center gap-1">
               <ArrowDown className="w-3.5 h-3.5" /> End of Digital Offers List

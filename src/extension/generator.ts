@@ -120,7 +120,7 @@ function resolveTargetUrl(tabUrl = '', targetRetailer = null) {
   }
 
   if (retailer === 'walgreens') {
-    if (tabUrl && tabUrl.includes('walgreens.com/offers')) {
+    if (tabUrl && (tabUrl.includes('walgreens.com/offers') || tabUrl.includes('walgreens.com/coupons'))) {
       return tabUrl;
     }
     return DEFAULT_WALGREENS_URL;
@@ -213,6 +213,29 @@ chrome.action.onClicked.addListener(async (tab) => {
     chrome.tabs.onUpdated.addListener(onTabUpdatedListener);
   }
 });
+
+// Auto-start on navigation for supported coupon pages (if enabled in settings)
+if (CONFIG.autoStartOnNavigation) {
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab && tab.url) {
+      const lower = tab.url.toLowerCase();
+      const isCoupons = lower.includes('walgreens.com/offers') || 
+                        lower.includes('walgreens.com/coupons') ||
+                        (lower.includes('shoprite.com') && lower.includes('coupon')) ||
+                        lower.includes('cvs.com/extracare') ||
+                        lower.includes('kroger.com/savings/cl/coupons') ||
+                        lower.includes('publix.com/savings/digital-coupons') ||
+                        lower.includes('familydollar.com/smart-coupons');
+      if (isCoupons) {
+        setTimeout(async () => {
+          try {
+            await injectAndStartLoader(tabId, CONFIG.clippingStrategy || 'instant');
+          } catch (e) {}
+        }, 1800);
+      }
+    }
+  });
+}
 
 // Centralized message router & multi-frame session coordinator
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -560,12 +583,13 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     scrollStep: ${Number(config.scrollStep)},
     showHud: ${Boolean(config.showHud)},
     showAlert: ${Boolean(config.showAlert)},
+    autoStartOnNavigation: ${Boolean(config.autoStartOnNavigation)},
     clippingStrategy: ${JSON.stringify(config.clippingStrategy)},
     overrideLoginCheck: ${Boolean(config.overrideLoginCheck)},
     keywords: ${JSON.stringify(config.customKeywords.length > 0 ? config.customKeywords : [
-      'load coupon', 'clip coupon', 'add to card', 'clip', 'clip offer', 'load offer',
+      'load coupon', 'clip coupon', 'add to card', 'clip', 'clip offer', 'clip rebate', 'load rebate', 'load offer',
       'load to card', 'save to card', 'clip to card', 'add offer', 'save offer', 'load', 
-      'clip digital coupon', 'clip deal', 'clip & save', 'clip and save'
+      'clip digital coupon', 'clip deal', 'clip & save', 'clip and save', 'clip rewards'
     ])}
   };
 
@@ -1231,6 +1255,18 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       combined.includes('show 30') || combined.includes('show 35') || combined.includes('show next');
     if (isPaginationOrLoadMore) return false;
 
+    // Absolute rejection for UNCLIP (Family Dollar Smart Coupons & all retailers)
+    if (
+      cleanText === 'unclip' || cleanAria === 'unclip' ||
+      cleanText.includes('unclip') || cleanAria.includes('unclip') ||
+      (rawText && rawText.toLowerCase().includes('unclip')) ||
+      (rawAria && rawAria.toLowerCase().includes('unclip')) ||
+      el.classList.contains('unclip') || (el.className && typeof el.className === 'string' && el.className.toLowerCase().includes('unclip')) ||
+      el.getAttribute('data-element-name') === 'UNCLIP' || el.getAttribute('data-element-name') === 'Unclip'
+    ) {
+      return false;
+    }
+
     // 6. Direct rejection of already clipped or non-clip buttons
     if (
       cleanText === 'clipped' || cleanText === 'loaded' || cleanText === 'already clipped' || cleanText === 'already loaded' ||
@@ -1282,21 +1318,42 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
     // 7. Positive Coupon Clipping Action Verification (ShopRite & Walgreens & Kroger)
     const hasExactCouponText = 
-      /^(clip|load|clip coupon|load coupon|clip to card|load to card|add to card|save to card|clip offer|load offer|clip digital coupon|load digital coupon|clip deal|load deal|add coupon|clip & save|clip and save)$/i.test(cleanText) ||
-      /^(clip|load|clip coupon|load coupon|clip to card|load to card|add to card|save to card|clip offer|load offer|clip digital coupon|load digital coupon|clip deal|load deal|add coupon|clip & save|clip and save)$/i.test(cleanAria);
+      /^(clip|load|clip coupon|load coupon|clip to card|load to card|add to card|save to card|clip offer|load offer|clip digital coupon|load digital coupon|clip deal|load deal|add coupon|clip rebate|clip rebates|load rebate|clip & save|clip and save|clip rewards|clip cash rewards)$/i.test(cleanText) ||
+      /^(clip|load|clip coupon|load coupon|clip to card|load to card|add to card|save to card|clip offer|load offer|clip digital coupon|load digital coupon|clip deal|load deal|add coupon|clip rebate|clip rebates|load rebate|clip & save|clip and save|clip rewards|clip cash rewards)$/i.test(cleanAria);
 
-    // Walgreens specific clip patterns: e.g. "Clip $2.00 off", "Clip $1.50 off", "Clip deal", "Clip offer"
+    // Walgreens specific clip patterns: "Clip", "Clip rebate", "Clip $X off", "Clip deal", "Clip offer", "Clip rewards"
     const hasWalgreensClipFormat = 
-      /^clip(\\s+\\$\\d+(\\.\\d{2})?.*|\\s+deal|\\s+offer|\\s+coupon)?$/i.test(cleanText) ||
-      /^clip(\\s+\\$\\d+(\\.\\d{2})?.*|\\s+deal|\\s+offer|\\s+coupon)?$/i.test(cleanAria) ||
-      el.classList.contains('wag-btn-clip') || 
-      el.getAttribute('data-element-name') === 'Clip' ||
-      (el.getAttribute('id') || '').includes('clip');
+      isWalgreens && (
+        cleanText === 'clip' || cleanAria === 'clip' ||
+        cleanText === 'clip rebate' || cleanAria === 'clip rebate' ||
+        cleanText.startsWith('clip rebate') || cleanAria.startsWith('clip rebate') ||
+        cleanText.startsWith('clip') || cleanAria.startsWith('clip') ||
+        cleanText.includes('clip rebate') || cleanAria.includes('clip rebate') ||
+        cleanText.includes('clip offer') || cleanAria.includes('clip offer') ||
+        cleanText.includes('clip coupon') || cleanAria.includes('clip coupon') ||
+        cleanText.includes('clip deal') || cleanAria.includes('clip deal') ||
+        cleanText.includes('clip reward') || cleanAria.includes('clip reward') ||
+        cleanText.includes('w cash') || cleanAria.includes('w cash') ||
+        el.classList.contains('wag-btn-clip') || 
+        el.classList.contains('wag-btn-rebate') ||
+        el.getAttribute('data-element-name') === 'Clip' ||
+        el.getAttribute('data-element-name') === 'Clip rebate' ||
+        (el.getAttribute('data-element-name') || '').toLowerCase().includes('clip') ||
+        (el.getAttribute('data-testid') || '').toLowerCase().includes('clip') ||
+        (el.getAttribute('id') || '').toLowerCase().includes('clip') ||
+        (el.className && typeof el.className === 'string' && el.className.toLowerCase().includes('clip'))
+      );
 
     const hasFamilyDollarClipFormat = 
-      cleanText.includes('clip coupon') || cleanAria.includes('clip coupon') ||
-      /^clip\\s+coupon$/i.test(cleanText) || /^clip\\s+coupon$/i.test(cleanAria) ||
-      el.classList.contains('clip-coupon') || el.classList.contains('clip-btn');
+      isFamilyDollar && !cleanText.includes('unclip') && !cleanAria.includes('unclip') && (
+        cleanText === 'clip coupon' || cleanAria === 'clip coupon' ||
+        cleanText.includes('clip coupon') || cleanAria.includes('clip coupon') ||
+        cleanText === 'clip' || cleanAria === 'clip' ||
+        /^clip\\s+coupon$/i.test(cleanText) || /^clip\\s+coupon$/i.test(cleanAria) ||
+        el.getAttribute('data-element-name') === 'CLIP COUPON' ||
+        el.getAttribute('data-element-name') === 'Clip Coupon' ||
+        ((el.classList.contains('clip-coupon') || el.classList.contains('clip-btn')) && !cleanText.includes('unclip'))
+      );
 
     const hasCVSClipFormat = 
       isCVS && (
@@ -1384,12 +1441,13 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       return (
         t === 'loaded' || t === 'clipped' || t === 'in card' || t === 'on card' || t === 'sent to card' ||
         t === 'already clipped' || t === 'already loaded' || t === 'clipped ✓' || t === 'loaded ✓' ||
-        aria.startsWith('loaded for') || aria.startsWith('loaded') || aria === 'clipped' || aria === 'sent to card' ||
+        t === 'rebate clipped' || t === 'clipped rebate' || t === 'unclip' || t.includes('unclip') ||
+        aria.startsWith('loaded for') || aria.startsWith('loaded') || aria === 'clipped' || aria === 'sent to card' || aria.includes('unclip') ||
         t.includes('coupon clipped') || t.includes('offer clipped') || t.includes('coupon loaded') ||
         el.classList.contains('btn-loaded-to-card') || el.classList.contains('loaded-to-card') ||
         el.classList.contains('btn-loaded') || el.classList.contains('is-loaded') ||
-        el.classList.contains('wag-btn-clipped') || el.classList.contains('is-clipped') ||
-        el.getAttribute('data-element-name') === 'Clipped'
+        el.classList.contains('wag-btn-clipped') || el.classList.contains('is-clipped') || el.classList.contains('unclip') ||
+        el.getAttribute('data-element-name') === 'Clipped' || el.getAttribute('data-element-name') === 'UNCLIP' || el.getAttribute('data-element-name') === 'Unclip'
       );
     });
 
@@ -1412,6 +1470,21 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   }
 
   function isScrollAtBottom(container) {
+    // 0. For single-page retailers where window/documentElement scrolls (Walgreens, Publix, Kroger, CVS, Family Dollar)
+    if (isWalgreens || isPublix || isKroger || isCVS || isFamilyDollar) {
+      const innerH = window.innerHeight || (document.documentElement ? document.documentElement.clientHeight : 0);
+      const totalH = Math.max(
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+      const scrollY = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0);
+
+      if (totalH > innerH + 60 && innerH > 0) {
+        return (scrollY + innerH >= totalH - 120);
+      }
+      return false;
+    }
+
     // 1. If an identified scroll container element exists with actual scrollable overflow
     if (container && container !== window && container !== document.body && container !== document.documentElement) {
       if (container.scrollHeight > container.clientHeight + 25) {
@@ -1443,7 +1516,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   // Find unclipped coupon buttons
   function findUnclippedButtons() {
     const candidates = queryAllDeep(
-      'button, [role="button"], a[role="button"], a[href*="coupon" i], a[href*="offer" i], input[type="button"], input[type="submit"], div[role="button"], [class*="clip" i], [class*="load" i], [class*="btn" i], [class*="button" i], [data-element-name="Clip"]'
+      'button, [role="button"], a[role="button"], a[href*="coupon" i], a[href*="offer" i], input[type="button"], input[type="submit"], div[role="button"], [class*="clip" i], [class*="load" i], [class*="btn" i], [class*="button" i], [data-element-name="Clip"], [data-element-name="Clip rebate"], [data-element-name*="clip" i]'
     );
     return candidates.filter(isCouponButton);
   }
@@ -1454,19 +1527,26 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     return spinners.some(s => s.offsetParent !== null);
   }
 
-  // Find Load More button
+  // Find Load More button (with deep support for Walgreens "Load more offers" and pagination)
   function findLoadMoreButton() {
-    const candidates = queryAllDeep('button, [role="button"], a[role="button"], a');
+    const candidates = queryAllDeep(
+      'button, [role="button"], a[role="button"], a, input[type="button"], [data-element-name*="load" i], [data-element-name*="more" i], [data-element-name*="next" i], [data-testid*="load-more" i], [data-testid*="pagination" i], [class*="load-more" i], [class*="pagination" i]'
+    );
     for (const el of candidates) {
       if (el.disabled || el.getAttribute('aria-disabled') === 'true') continue;
-      if (el.offsetParent === null) continue;
-      const text = ((el.innerText || el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '')).trim().toLowerCase();
+      if (el.offsetParent === null && (!el.getClientRects || el.getClientRects().length === 0)) continue;
+      const text = ((el.innerText || el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.getAttribute('data-element-name') || '')).trim().toLowerCase();
       const isLoadMore = text.includes('load more') || text.includes('show more') ||
         text.includes('view more') || text.includes('see more') ||
         text.includes('load all') || text.includes('more coupons') ||
-        text.includes('more offers') || text.includes('load 30') || text.includes('load 35') ||
-        text.includes('load next') || text.includes('next page');
-      if (isLoadMore && !text.includes('filter') && !text.includes('terms') && !text.includes('close') && !text.includes('already')) {
+        text.includes('more offers') || text.includes('load 24') || text.includes('load 30') || text.includes('load 35') ||
+        text.includes('load next') || text.includes('next page') || text === 'next' || text === 'next >' ||
+        text.includes('show 24') || text.includes('show 30') || text.includes('show 35') ||
+        el.getAttribute('data-element-name') === 'Load More' ||
+        el.getAttribute('data-element-name') === 'Load more' ||
+        el.getAttribute('data-element-name') === 'Next' ||
+        (el.classList && (el.classList.contains('wag-load-more') || el.classList.contains('load-more-btn')));
+      if (isLoadMore && !text.includes('filter') && !text.includes('terms') && !text.includes('close') && !text.includes('already') && !text.includes('sign in')) {
         return el;
       }
     }
@@ -1502,6 +1582,11 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
   // Finds the inner Coupon Window holding the offers (ShopRite, Publix, and nested container setups)
   function findCouponWindow(buttons = []) {
+    // Single-page retailers where window/document scrolls: Walgreens, Publix, Kroger, CVS, Family Dollar
+    if (isWalgreens || isPublix || isKroger || isCVS || isFamilyDollar) {
+      return document.scrollingElement || document.documentElement || document.body || window;
+    }
+
     // 1. If we already found a valid connected coupon window, keep using it!
     if (activeCouponWindow && activeCouponWindow.isConnected && !nonScrollableBlacklist.has(activeCouponWindow)) {
       if (activeCouponWindow !== document.body && activeCouponWindow !== document.documentElement && activeCouponWindow !== window) {
@@ -1586,6 +1671,36 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   // Scrolls the inner coupon grid and inner frame to the bottom without displacing the outer browser page
   function scrollCouponWindow(step, buttons = []) {
     let innerScrolled = false;
+
+    // 0. For single-page retailers (Walgreens, Publix, Kroger, CVS, Family Dollar), scroll the main page
+    if (isWalgreens || isPublix || isKroger || isCVS || isFamilyDollar) {
+      try {
+        window.scrollBy({ top: step, behavior: 'smooth' });
+      } catch (e) {
+        window.scrollBy(0, step);
+      }
+      if (document.documentElement) document.documentElement.scrollTop += step;
+      if (document.body) document.body.scrollTop += step;
+      window.dispatchEvent(new Event('scroll', { bubbles: true }));
+      document.dispatchEvent(new Event('scroll', { bubbles: true }));
+      try {
+        window.dispatchEvent(new WheelEvent('wheel', { deltaY: step, bubbles: true }));
+      } catch (e) {}
+
+      // Actively bring the last coupon card into view to trigger infinite scroll / lazy loading
+      try {
+        const allCoupons = Array.from(document.querySelectorAll(
+          '[class*="coupon" i], [class*="offer" i], [class*="card" i], article, button.wag-btn-clip, [data-element-name="Clip"], [data-element-name="Clip rebate"]'
+        ));
+        if (allCoupons.length > 0) {
+          const lastEl = allCoupons[allCoupons.length - 1];
+          lastEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      } catch (e) {}
+
+      return true;
+    }
+
     const couponWin = findCouponWindow(buttons);
     
     // 1. If an identified scrollable element exists (ancestor container)
@@ -1764,23 +1879,35 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     try { btn.dispatchEvent(new PointerEvent('pointerup', pointerInit)); } catch (e) {}
     try { btn.dispatchEvent(new MouseEvent('mouseup', mouseInit)); } catch (e) {}
     
-    // Dispatch synthetic mouse click, then guarantee native .click() execution on the real clickable element
-    try { 
-      btn.dispatchEvent(new MouseEvent('click', mouseInit)); 
-    } catch (e) {}
+    // Ensure clean single click without double-firing on toggle buttons (preventing instant unclip on Family Dollar)
+    const realClickable = btn.closest('button, [role="button"], a[role="button"]') || btn;
+    if (realClickable.__cs_clicked_at && (Date.now() - realClickable.__cs_clicked_at < 2200)) {
+      return;
+    }
+    realClickable.__cs_clicked_at = Date.now();
+    btn.__cs_clicked_at = Date.now();
 
     try {
-      const realClickable = btn.closest('button, [role="button"], a[role="button"]') || btn;
       if (typeof realClickable.click === 'function') {
         realClickable.click();
+      } else {
+        btn.dispatchEvent(new MouseEvent('click', mouseInit));
       }
-    } catch (err) {}
+    } catch (err) {
+      try { realClickable.click(); } catch (e) {}
+    }
   }
 
   // Check login status for ShopRite & Walgreens
   function checkLoginStatus() {
     // 0. Explicit user override check or config bypass
     if (window.__cs_login_overridden || sessionStorage.getItem('__cs_login_override') === 'true' || Boolean(CONFIG.overrideLoginCheck)) {
+      return true;
+    }
+
+    // 0b. If actionable unclipped coupon buttons already exist on the page right now, proceed directly!
+    // This prevents false login blockages on Walgreens and other sites where a "Sign In" link is present in a menu or footer.
+    if (findUnclippedButtons().length > 0) {
       return true;
     }
 
@@ -1995,18 +2122,18 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     }
 
     // SPECIAL DELEGATION FOR NESTED IFRAME ARCHITECTURES (ShopRite Digital Coupon Center):
-    // In top frame, immediately delegate to the coupon iframe if present
-    if (isTopFrame) {
+    // In top frame, immediately delegate to the coupon iframe if present (ONLY on ShopRite)
+    if (isShopRite && isTopFrame) {
       const childIframes = Array.from(document.querySelectorAll('iframe'));
-      if (childIframes.length > 0) {
-        console.log(\`[CouponSweep] Top frame detected \${childIframes.length} iframes. Delegating clipping to child coupon frame.\`);
-        updateStatus('Connecting to ' + retailerName + ' Digital Coupon Center...', 0);
-        
-        const couponIframe = childIframes.find(f => {
-          const s = ((f.src || '') + ' ' + (f.title || '') + ' ' + (f.name || '') + ' ' + (f.id || '')).toLowerCase();
-          return s.includes('coupon') || s.includes('digital') || s.includes('wakefern') || s.includes('shoprite');
-        }) || childIframes[0];
+      const couponIframe = childIframes.find(f => {
+        const s = ((f.src || '') + ' ' + (f.title || '') + ' ' + (f.name || '') + ' ' + (f.id || '')).toLowerCase();
+        return s.includes('coupon') || s.includes('digital') || s.includes('wakefern') || s.includes('shoprite');
+      });
 
+      if (couponIframe && childIframes.length > 0) {
+        console.log('[CouponSweep] Top frame detected ShopRite coupon iframe. Delegating clipping to child coupon frame.');
+        updateStatus('Connecting to ShopRite Digital Coupon Center...', 0);
+        
         try {
           couponIframe.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (e) {}
@@ -2114,19 +2241,29 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           // ⚡ Instant / Safe Auto-Pacer Mode
           const isWalgreensSite = isWalgreens;
           const isShopRiteSite = isShopRite;
+          const isFamilyDollarSite = isFamilyDollar || currentHostname.includes('familydollar.com');
           updateStatus(
-            isWalgreensSite 
-              ? \`🛡️ Safe Auto-Pacer: Loading \${buttons.length} offers safely... (\${aggregateClipped || localClipped} clipped)\`
-              : \`⚡ Rapid Batch: Loading \${buttons.length} offers... (\${aggregateClipped || localClipped} clipped)\`,
+            isFamilyDollarSite
+              ? '🛡️ Smart Coupons Safe Pacer: Loading ' + buttons.length + ' offers safely... (' + (aggregateClipped || localClipped) + ' clipped)'
+              : (isWalgreensSite 
+                  ? '🛡️ Safe Auto-Pacer: Loading ' + buttons.length + ' offers safely... (' + (aggregateClipped || localClipped) + ' clipped)'
+                  : '⚡ Rapid Batch: Loading ' + buttons.length + ' offers... (' + (aggregateClipped || localClipped) + ' clipped)'),
             aggregateClipped || localClipped
           );
 
           for (const btn of buttons) {
             if (shouldStop) break;
             try {
-              // Check if button text or state already transitioned to Loaded
+              // Check if button text or state already transitioned to Loaded or UNCLIP
               const currText = (btn.textContent || btn.innerText || '').trim().toLowerCase();
-              if (currText.includes('loaded') || currText.includes('clipped') || currText.includes('saved') || currText.includes('added') || btn.getAttribute('aria-pressed') === 'true') {
+              if (
+                currText.includes('loaded') || currText.includes('clipped') || 
+                currText.includes('saved') || currText.includes('added') || 
+                currText.includes('unclip') || currText === 'unclip' ||
+                btn.getAttribute('aria-pressed') === 'true' ||
+                btn.classList.contains('unclip') ||
+                btn.getAttribute('data-element-name') === 'UNCLIP'
+              ) {
                 btn.setAttribute('data-cs-processed', 'true');
                 processedElements.add(btn);
                 continue;
@@ -2150,16 +2287,18 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
               const rawTitle = btn.getAttribute('data-title') || btn.getAttribute('aria-label') || (btn.innerText || '').trim();
               const cleanTitle = rawTitle.slice(0, 32);
 
-              if (isWalgreensSite || isShopRiteSite) {
+              if (isWalgreensSite || isShopRiteSite || isFamilyDollarSite) {
                 btn.style.outline = '2px solid #0f172a';
               }
 
               safeStealthClick(btn);
 
-              // On Walgreens & ShopRite: Wait for server response / button state transition ("Loaded" / "Clipped")
-              if (isWalgreensSite || isShopRiteSite) {
-                updateStatus(\`⏳ Loading offer: \${cleanTitle}... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await waitForCouponConfirmation(btn, isWalgreensSite ? 1800 : 1200);
+              // On Walgreens, ShopRite & Family Dollar: Wait for server response / button state transition ("UNCLIP" / "Loaded" / "Clipped")
+              // Waiting for state transition completely prevents race conditions and automatic unclip rollbacks
+              if (isWalgreensSite || isShopRiteSite || isFamilyDollarSite) {
+                const waitLabel = isFamilyDollarSite ? '🛡️ Smart Coupons: Clipping ' : '⏳ Loading offer: ';
+                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await waitForCouponConfirmation(btn, isFamilyDollarSite ? 950 : (isWalgreensSite ? 700 : 1200));
                 btn.style.outline = '';
               }
 
@@ -2180,9 +2319,11 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                   type: 'CS_COUPON_CLIPPED',
                   count: 1,
                   title: cleanTitle,
-                  status: isWalgreensSite 
-                    ? \`🛡️ Safely loaded offer #\${(aggregateClipped || 0) + localClipped}: \${cleanTitle}\`
-                    : \`⚡ Rapid batch: Loaded offer #\${(aggregateClipped || 0) + localClipped}: \${cleanTitle}\`
+                  status: isFamilyDollarSite
+                    ? ('🛡️ Smart Coupon clipped #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle)
+                    : (isWalgreensSite 
+                        ? ('🛡️ Safely loaded offer #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle)
+                        : ('⚡ Rapid batch: Loaded offer #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle))
                 });
               } catch (e) {}
 
@@ -2193,7 +2334,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                   if (errorCheck.isLimit200) {
                     console.warn('[CouponSweep] Walgreens 200 clipped coupons limit reached.');
                     updateStatus(
-                      \`⚠️ Walgreens Limit Reached: 200 clipped coupons maximum. Please redeem or remove some coupons.\`,
+                      '⚠️ Walgreens Limit Reached: 200 clipped coupons maximum. Please redeem or remove some coupons.',
                       aggregateClipped || localClipped,
                       true
                     );
@@ -2203,7 +2344,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                   }
                   console.warn('[CouponSweep] Walgreens rate limit detected ("cannot clip at this time"). Triggering 8.5s cooldown recovery.');
                   updateStatus(
-                    \`⚠️ Walgreens server cooldown ("Cannot clip at this time"). Pausing 8s for server to settle...\`,
+                    '⚠️ Walgreens server cooldown ("Cannot clip at this time"). Pausing 8s for server to settle...',
                     aggregateClipped || localClipped,
                     true
                   );
@@ -2229,20 +2370,26 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
               }
 
               // Anti-bot stealth pacing:
-              // On Walgreens: 1,800ms - 2,500ms jitter (safe for Walgreens backend API & Akamai)
+              // On Family Dollar: 650ms - 950ms jitter (prevents backend rate limits and automatic unclip rollbacks)
+              // On Walgreens: responsive 360ms - 580ms jitter (safe for Walgreens backend API)
               // On Kroger: 420ms - 780ms jitter (safe for Krogerlytics & Apollo GraphQL)
               // On ShopRite: 160ms - 260ms jitter
-              const delay = isWalgreensSite 
-                ? (1800 + Math.floor(Math.random() * 700)) 
-                : (isKroger
-                    ? (420 + Math.floor(Math.random() * 360))
-                    : (160 + Math.floor(Math.random() * 100)));
+              const delay = isFamilyDollarSite
+                ? (650 + Math.floor(Math.random() * 300))
+                : (isWalgreensSite 
+                    ? (360 + Math.floor(Math.random() * 220)) 
+                    : (isKroger
+                        ? (420 + Math.floor(Math.random() * 360))
+                        : (160 + Math.floor(Math.random() * 100))));
               await sleep(delay);
 
-              // Cooldown pause every 5 offers on Walgreens to prevent backend rate-limit lock
-              if (isWalgreensSite && localClipped % 5 === 0) {
-                updateStatus(\`🛡️ Anti-bot server breathing pause (4.5s cooldown)... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await sleep(4500 + Math.floor(Math.random() * 1200));
+              // Cooldown pause: every 7 offers on Family Dollar, every 15 offers on Walgreens to maintain healthy session
+              if (isWalgreensSite && localClipped % 15 === 0) {
+                updateStatus('🛡️ Anti-bot server breathing pause (2s cooldown)... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await sleep(2000 + Math.floor(Math.random() * 500));
+              } else if (isFamilyDollarSite && localClipped % 7 === 0) {
+                updateStatus('🛡️ Smart Coupons anti-bot breathing pause (2s cooldown)... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await sleep(2200 + Math.floor(Math.random() * 500));
               }
             } catch (e) {
               console.error(e);
@@ -2254,13 +2401,21 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           // 🎬 Step-by-Step Mode: Smooth scroll & visual glide
           const isWalgreensSite = isWalgreens;
           const isShopRiteSite = isShopRite;
+          const isFamilyDollarSite = isFamilyDollar || currentHostname.includes('familydollar.com');
           for (const btn of buttons) {
             if (shouldStop) break;
 
             try {
-              // Check if button text or state already transitioned to Loaded
+              // Check if button text or state already transitioned to Loaded or UNCLIP
               const currText = (btn.textContent || btn.innerText || '').trim().toLowerCase();
-              if (currText.includes('loaded') || currText.includes('clipped') || currText.includes('saved') || currText.includes('added') || btn.getAttribute('aria-pressed') === 'true') {
+              if (
+                currText.includes('loaded') || currText.includes('clipped') || 
+                currText.includes('saved') || currText.includes('added') || 
+                currText.includes('unclip') || currText === 'unclip' ||
+                btn.getAttribute('aria-pressed') === 'true' ||
+                btn.classList.contains('unclip') ||
+                btn.getAttribute('data-element-name') === 'UNCLIP'
+              ) {
                 btn.setAttribute('data-cs-processed', 'true');
                 processedElements.add(btn);
                 continue;
@@ -2292,16 +2447,17 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
               const rawTitle = btn.getAttribute('data-title') || btn.getAttribute('aria-label') || (btn.innerText || '').trim();
               const cleanTitle = rawTitle.slice(0, 32);
 
-              updateStatus(\`Gliding to offer: \${cleanTitle}...\`, aggregateClipped || localClipped);
+              updateStatus('Gliding to offer: ' + cleanTitle + '...', aggregateClipped || localClipped);
               btn.style.outline = '3px solid #0f172a';
               await sleep(CONFIG.glideDelay);
 
               safeStealthClick(btn);
 
-              // On Walgreens & ShopRite: Wait for server response / button state transition ("Loaded" / "Clipped")
-              if (isWalgreensSite || isShopRiteSite) {
-                updateStatus(\`⏳ Loading offer: \${cleanTitle}... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await waitForCouponConfirmation(btn, isWalgreensSite ? 1800 : 1200);
+              // On Walgreens, ShopRite & Family Dollar: Wait for server response / button state transition ("UNCLIP" / "Loaded" / "Clipped")
+              if (isWalgreensSite || isShopRiteSite || isFamilyDollarSite) {
+                const waitLabel = isFamilyDollarSite ? '🛡️ Smart Coupons: Clipping ' : '⏳ Loading offer: ';
+                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await waitForCouponConfirmation(btn, isFamilyDollarSite ? 950 : (isWalgreensSite ? 700 : 1200));
               }
 
               localClipped++;
@@ -2368,21 +2524,27 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
               }
 
               // Humanized delay between clips
-              // On Walgreens: 1,900ms - 2,800ms
+              // On Family Dollar: 750ms - 1050ms
+              // On Walgreens: 450ms - 750ms
               // On Kroger: 450ms - 800ms
               // On ShopRite: CONFIG.clickDelay + jitter
-              const stepClickDelay = isWalgreensSite 
-                ? (1900 + Math.floor(Math.random() * 900))
-                : (isKroger
-                    ? (450 + Math.floor(Math.random() * 350))
-                    : (CONFIG.clickDelay + Math.floor(Math.random() * 150)));
+              const stepClickDelay = isFamilyDollarSite
+                ? (750 + Math.floor(Math.random() * 300))
+                : (isWalgreensSite 
+                    ? (450 + Math.floor(Math.random() * 300))
+                    : (isKroger
+                        ? (450 + Math.floor(Math.random() * 350))
+                        : (CONFIG.clickDelay + Math.floor(Math.random() * 150))));
 
               await sleep(stepClickDelay);
 
-              // Cooldown pause every 5 offers on Walgreens
-              if (isWalgreensSite && localClipped % 5 === 0) {
-                updateStatus(\`🛡️ Anti-bot server breathing pause (4.5s cooldown)... (\${aggregateClipped || localClipped} clipped)\`, aggregateClipped || localClipped);
-                await sleep(4500 + Math.floor(Math.random() * 1200));
+              // Cooldown pause: every 7 offers on Family Dollar, every 15 offers on Walgreens
+              if (isWalgreensSite && localClipped % 15 === 0) {
+                updateStatus('🛡️ Anti-bot server breathing pause (2s cooldown)... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await sleep(2000 + Math.floor(Math.random() * 500));
+              } else if (isFamilyDollarSite && localClipped % 7 === 0) {
+                updateStatus('🛡️ Smart Coupons anti-bot breathing pause (2s cooldown)... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                await sleep(2200 + Math.floor(Math.random() * 500));
               }
             } catch (err) {
               console.error(err);
@@ -2724,6 +2886,27 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     }
     return true;
   });
+
+  // Automatic start on navigation to coupon pages (if enabled in settings)
+  const isCouponOffersPage = currentUrl.includes('coupon') || 
+                             currentUrl.includes('offers') || 
+                             currentUrl.includes('savings') || 
+                             currentUrl.includes('circular') ||
+                             currentUrl.includes('extracare') ||
+                             isWalgreens;
+
+  if (CONFIG.autoStartOnNavigation && isCouponOffersPage && isTopFrame) {
+    console.log('[CouponSweep] Auto-start on navigation enabled. Checking offers on ' + retailerName + '...');
+    setTimeout(() => {
+      if (!isRunning && !shouldStop) {
+        const unclipped = findUnclippedButtons();
+        if (unclipped.length > 0) {
+          console.log('[CouponSweep] Found ' + unclipped.length + ' unclipped coupons on page load. Auto-starting loader...');
+          startLoader(CONFIG.clippingStrategy || 'instant');
+        }
+      }
+    }, 1500);
+  }
 })();
 `;
 

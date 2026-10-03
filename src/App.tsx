@@ -18,7 +18,7 @@ const DEFAULT_CONFIG: ExtensionConfig = {
   showHud: true,
   showAlert: true,
   playSound: false,
-  customKeywords: ['load coupon', 'clip coupon', 'add to card', 'clip', 'clip offer'],
+  customKeywords: ['load coupon', 'clip coupon', 'add to card', 'clip', 'clip offer', 'clip rebate', 'clip deal', 'load rebate', 'clip rewards'],
   targetUrl: 'https://www.shoprite.com/sm/planning/rsid/521/digital-coupon',
   storeRsid: '521',
   clippingStrategy: 'instant',
