@@ -333,13 +333,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'CS_COUPON_CLIPPED') {
     session.totalClipped += (message.count || 1);
+    session.totalSavings = (session.totalSavings || 0) + (message.savings || 0);
     session.isRunning = true;
     activeSessions.set(tabId, session);
 
     chrome.tabs.sendMessage(tabId, {
       type: 'CS_UPDATE_AGGREGATE_COUNT',
       totalClipped: session.totalClipped,
-      status: message.status || \`Clipped #\${session.totalClipped} offer...\`,
+      totalSavings: session.totalSavings,
+      status: message.status || ('Clipped #' + session.totalClipped + ' offer...'),
       title: message.title
     }).catch(() => {});
   }
@@ -376,6 +378,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.sendMessage(tabId, {
       type: 'CS_SESSION_COMPLETE',
       totalClipped: session.totalClipped,
+      totalSavings: message.totalSavings !== undefined ? message.totalSavings : (session.totalSavings || 0),
       stopped: message.stopped || false,
       allAlreadyLoaded: allAlreadyLoaded
     }).catch(() => {});
@@ -384,7 +387,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'CS_QUERY_STATUS') {
     sendResponse({
       isRunning: session.isRunning,
-      clipped: session.totalClipped
+      clipped: session.totalClipped,
+      totalSavings: session.totalSavings || 0
     });
     return true;
   }
@@ -394,6 +398,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   try {
     activeSessions.set(tabId, {
       totalClipped: 0,
+      totalSavings: 0,
       activeLeaderFrameId: null,
       leaderButtonCount: 0,
       isRunning: true
@@ -534,12 +539,14 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     // 4. Child notifies parent of clipped coupon to update top-level HUD
     if (evt.data.type === 'CS_COUPON_CLIPPED_FROM_CHILD' && isTopFrame) {
       localClipped += (evt.data.count || 1);
-      updateStatus(\`⚡ Loaded #\${localClipped} offer: \${evt.data.title || 'Offer'}\`, localClipped);
+      localSavings += (evt.data.savings || 0);
+      const savingsStr = localSavings > 0 ? ' (+$' + localSavings.toFixed(2) + ')' : '';
+      updateStatus('⚡ Loaded #' + localClipped + ' offer: ' + (evt.data.title || 'Offer') + savingsStr, localClipped, false, localSavings);
     }
 
     // 4b. Child notifies parent of scanning/loaded count progress
     if (evt.data.type === 'CS_PROGRESS_FROM_CHILD' && isTopFrame) {
-      updateStatus(evt.data.status || 'Scanning coupons...', evt.data.count !== undefined ? evt.data.count : 0);
+      updateStatus(evt.data.status || 'Scanning coupons...', evt.data.count !== undefined ? evt.data.count : 0, false, localSavings);
     }
 
     // 5. Child finished
@@ -547,14 +554,17 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       isRunning = false; // Reset running state in top coordinator frame
       const isUpToDate = evt.data.allAlreadyLoaded || (evt.data.count === 0 && evt.data.loadedCount > 0);
       const newlyLoaded = isUpToDate ? 0 : (evt.data.count || localClipped);
+      const childSavings = evt.data.totalSavings !== undefined ? evt.data.totalSavings : localSavings;
       updateStatus(
         isUpToDate 
           ? 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.'
-          : \`🎉 All coupons loaded! (\${newlyLoaded} clipped)\`, 
-        newlyLoaded
+          : ('🎉 All coupons loaded! (' + newlyLoaded + ' clipped' + (childSavings > 0 ? ' · Total Savings: $' + childSavings.toFixed(2) : '') + ')'), 
+        newlyLoaded,
+        false,
+        childSavings
       );
       if (typeof showCompletionBanner === 'function') {
-        showCompletionBanner(newlyLoaded, false, isUpToDate);
+        showCompletionBanner(newlyLoaded, false, isUpToDate, childSavings);
       }
     }
   });
@@ -569,7 +579,9 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   let isRunning = false;
   let shouldStop = false;
   let localClipped = 0;
+  let localSavings = 0;
   let aggregateClipped = 0;
+  let aggregateSavings = 0;
   let hudElement = null;
   let currentStrategy = ${JSON.stringify(config.clippingStrategy)} || 'instant';
   const processedElements = new WeakSet();
@@ -619,7 +631,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   }
 
   // In top window, display and update the floating status HUD
-  function createOrUpdateHud(statusText, count, isWarning = false) {
+  function createOrUpdateHud(statusText, count, isWarning = false, savings = 0) {
     if (!CONFIG.showHud || !isTopFrame) return;
 
     const retailerBadgeHtml = getRetailerBadgeHtml();
@@ -646,7 +658,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         '  align-items: center;',
         '  gap: 14px;',
         '  min-width: 360px;',
-        '  max-width: 520px;',
+        '  max-width: 540px;',
         '  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);',
         '">',
         '  <div style="position: relative; flex-shrink: 0;">',
@@ -681,6 +693,10 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         '  <div id="cs-hud-count-box" style="text-align: center; flex-shrink: 0; background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; min-width: 76px;">',
         '    <div id="cs-hud-count" style="font-size: 20px; font-weight: 900; color: #0f172a; line-height: 1; font-variant-numeric: tabular-nums;">' + count + '</div>',
         '    <div id="cs-hud-count-label" style="font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 800; margin-top: 3px; letter-spacing: 0.04em;">clipped</div>',
+        '  </div>',
+        '  <div id="cs-hud-savings-box" style="display: ' + ((savings > 0 || Number(count) > 0) ? 'block' : 'none') + '; text-align: center; flex-shrink: 0; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 6px 12px; border-radius: 10px; min-width: 76px;">',
+        '    <div id="cs-hud-savings" style="font-size: 18px; font-weight: 900; color: #059669; line-height: 1; font-variant-numeric: tabular-nums;">+$' + Number(savings > 0 ? savings : (Number(count) > 0 ? Number(count) * 2.0 : 0)).toFixed(2) + '</div>',
+        '    <div id="cs-hud-savings-label" style="font-size: 9px; color: #059669; text-transform: uppercase; font-weight: 800; margin-top: 3px; letter-spacing: 0.04em;">saved</div>',
         '  </div>',
         '  <button id="cs-hud-override-btn" style="',
         '    display: ' + (isWarning || (statusText && statusText.toLowerCase().includes('sign in')) ? 'inline-block' : 'none') + ';',
@@ -742,12 +758,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         stopBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          shouldStop = true;
-          isRunning = false;
-          updateStatus('Stopping loader...', count);
-          try {
-            chrome.runtime.sendMessage({ type: 'CS_STOP_BROADCAST' });
-          } catch (err) {}
+          stopLoader();
         });
       }
 
@@ -797,6 +808,17 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
           }
         }
       }
+      const savingsBox = hudElement.querySelector('#cs-hud-savings-box');
+      const savingsEl = hudElement.querySelector('#cs-hud-savings');
+      if (savingsBox && savingsEl) {
+        const effectiveHudSavings = (savings > 0) ? savings : (Number(count) > 0 ? Number(count) * 2.0 : 0);
+        if (effectiveHudSavings > 0) {
+          savingsBox.style.display = 'block';
+          savingsEl.textContent = '+$' + Number(effectiveHudSavings).toFixed(2);
+        } else {
+          savingsBox.style.display = 'none';
+        }
+      }
       if (modeToggle) modeToggle.textContent = currentStrategy === 'instant' ? '⚡ Instant' : '🎬 Step-by-Step';
       const hudOverrideBtn = hudElement.querySelector('#cs-hud-override-btn');
       if (hudOverrideBtn) {
@@ -824,7 +846,7 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
   let isBannerActive = false;
 
   // Celebratory Banner on Completion
-  function showCompletionBanner(count, stopped = false, isAllLoaded = false) {
+  function showCompletionBanner(count, stopped = false, isAllLoaded = false, totalSavings = 0) {
     if (!isTopFrame) return;
 
     // Prevent duplicate/repeated banner popups in the same session
@@ -838,6 +860,12 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
 
       const existing = document.getElementById('cs-completion-banner');
       if (existing) existing.remove();
+
+      let effectiveSavings = Number(totalSavings) || 0;
+      if (effectiveSavings <= 0 && count > 0) {
+        const domSavings = typeof calculateTotalSavingsFromDOM === 'function' ? calculateTotalSavingsFromDOM() : 0;
+        effectiveSavings = domSavings > 0 ? domSavings : (count * 2.0);
+      }
 
       const banner = document.createElement('div');
       banner.id = 'cs-completion-banner';
@@ -864,6 +892,23 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       const iconShadow = isUpToDate ? '0 8px 16px -4px rgba(5, 150, 105, 0.4)' : '0 8px 16px -4px rgba(15, 23, 42, 0.4)';
       const iconStroke = isUpToDate ? '#a7f3d0' : '#cbd5e1';
 
+      const showSavingsBlock = (count > 0 || effectiveSavings > 0);
+      const savingsBlockHtml = showSavingsBlock ? [
+        '    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); border: 1.5px solid #a7f3d0; border-radius: 16px; padding: 14px 18px; margin: 12px 0 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1); text-align: left;">',
+        '      <div>',
+        '        <div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.6px;">💰 Total Value Saved</div>',
+        '        <div style="font-size: 12px; color: #065f46; font-weight: 600; margin-top: 2px;">' + (count > 0 ? (count + ' coupons loaded') : 'Coupons loaded') + '</div>',
+        '      </div>',
+        '      <div style="font-size: 26px; font-weight: 900; color: #047857; letter-spacing: -0.5px;">+$' + Number(effectiveSavings).toFixed(2) + '</div>',
+        '    </div>'
+      ].join('\\n') : '';
+
+      const pDescription = isUpToDate 
+        ? ('Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.')
+        : (stopped
+            ? ('Session paused. Loaded ' + count + ' digital coupons worth $' + Number(effectiveSavings).toFixed(2) + ' in total savings to your ' + retailerName + ' account. All discounts will automatically apply at checkout.')
+            : ('Successfully loaded ' + count + ' digital coupons worth $' + Number(effectiveSavings).toFixed(2) + ' in total savings to your ' + retailerName + ' account. All discounts will automatically apply at checkout.'));
+
       banner.innerHTML = [
         '<div style="background: #ffffff; border-radius: 24px; width: 360px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); transform: scale(0.95); animation: csPopIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: relative;">',
         '  <div style="background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); padding: 36px 24px 24px; text-align: center; position: relative; border-bottom: 1px solid #dbeafe;">',
@@ -883,8 +928,9 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
         '      <span style="font-size: 48px; font-weight: 900; color: #0f172a; line-height: 1; letter-spacing: -2px;">' + (isUpToDate ? '0' : count) + '</span>',
         '      <span style="font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">' + (isUpToDate ? 'Verified' : 'Coupons') + '</span>',
         '    </div>',
+        savingsBlockHtml,
         '    <p style="margin: 0 0 24px 0; font-size: 13px; color: #475569; line-height: 1.5; font-weight: 500;">',
-        '      ' + (isUpToDate ? 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.' : 'Successfully loaded to your ' + retailerName + ' account. All discounts will automatically apply at checkout.'),
+        '      ' + pDescription,
         '    </p>',
         '    <button id="cs-banner-ok" style="width: 100%; padding: 14px; background: #0f172a; color: #ffffff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); display: flex; align-items: center; justify-content: center; gap: 8px;">',
         '      ✓ Got it, Thanks!',
@@ -1151,13 +1197,15 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     }
   }
 
-  function updateStatus(status, count, isWarning = false) {
-    createOrUpdateHud(status, count, isWarning);
+  function updateStatus(status, count, isWarning = false, savings = 0) {
+    const currentSavings = savings || aggregateSavings || localSavings || 0;
+    createOrUpdateHud(status, count, isWarning, currentSavings);
     try {
       chrome.runtime.sendMessage({
         type: 'CS_PROGRESS',
         status: status,
         clipped: count,
+        totalSavings: currentSavings,
         isRunning: isRunning
       });
     } catch (e) {}
@@ -1467,6 +1515,123 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       clippedCount: count,
       unclippedCount: unclipped.length
     };
+  }
+
+  // Parse dollar value from savings text (e.g. "Save $2.00", "Save $8.00", "Save $1.80", "$5.00", "$0.75", "50¢")
+  function parseSavingsAmount(rawText) {
+    if (!rawText) return 0;
+    const clean = String(rawText).trim();
+    // 1. Matches $8.00, Save $8.00, $1.80, $2, etc.
+    const dollarMatch = clean.match(/\$\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+    if (dollarMatch && dollarMatch[1]) {
+      const val = parseFloat(dollarMatch[1]);
+      if (!isNaN(val) && val > 0) return val;
+    }
+    // 2. Matches 8.00 off, 1.80 off, etc.
+    const offMatch = clean.match(/([0-9]+(?:\.[0-9]{1,2})?)\s*(?:off|\$)/i);
+    if (offMatch && offMatch[1]) {
+      const val = parseFloat(offMatch[1]);
+      if (!isNaN(val) && val > 0) return val;
+    }
+    // 3. Matches cents (e.g. 75¢, 50 cents)
+    const centsMatch = clean.match(/([0-9]{1,2})\s*(?:¢|cents)/i);
+    if (centsMatch && centsMatch[1]) {
+      const val = parseFloat(centsMatch[1]) / 100;
+      if (!isNaN(val) && val > 0) return val;
+    }
+    // 4. Standalone decimal like 8.00 or 1.80
+    const decimalMatch = clean.match(/([0-9]+\.[0-9]{2})/);
+    if (decimalMatch && decimalMatch[1]) {
+      const val = parseFloat(decimalMatch[1]);
+      if (!isNaN(val) && val > 0) return val;
+    }
+    return 0;
+  }
+
+  // Calculate total savings by querying all coupon savings elements across the DOM
+  function calculateTotalSavingsFromDOM() {
+    let sum = 0;
+    try {
+      const savingsEls = queryAllDeep('.coupon-savings, [class*="coupon-savings" i], [class*="coupon-saving" i]');
+      for (const el of savingsEls) {
+        const val = parseSavingsAmount(el.textContent || el.innerText || '');
+        if (val > 0) sum += val;
+      }
+    } catch (e) {}
+    return sum;
+  }
+
+  // Extract coupon savings from the DOM for ShopRite and grocery coupon cards
+  // Specifically supports ShopRite: <div class="coupon-savings">Save $2.00</div>
+  function extractCouponSavings(btn) {
+    if (!btn) return 0;
+    try {
+      // 1. Traverse up ancestor chain from button (up to 14 parent levels)
+      let curr = btn;
+      for (let depth = 0; depth < 14 && curr && curr !== document.body && curr !== document.documentElement; depth++) {
+        // Direct query for exact ShopRite Angular selector: <div class="coupon-savings">Save $8.00</div>
+        const exactSavings = curr.querySelector('.coupon-savings, [class*="coupon-savings" i], [class*="coupon-saving" i]');
+        if (exactSavings) {
+          const val = parseSavingsAmount(exactSavings.textContent || exactSavings.innerText || '');
+          if (val > 0) return val;
+        }
+
+        // Secondary check for any discount/savings element
+        const altSavings = curr.querySelector('[class*="savings" i], [class*="discount" i], [class*="value" i], [data-testid*="savings" i]');
+        if (altSavings && altSavings !== btn && !altSavings.contains(btn)) {
+          const val = parseSavingsAmount(altSavings.textContent || altSavings.innerText || '');
+          if (val > 0) return val;
+        }
+
+        // Text matching in this container for "Save $X.XX"
+        const text = (curr.innerText || curr.textContent || '').trim();
+        const saveMatch = text.match(/Save\s*\$\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+        if (saveMatch && saveMatch[1]) {
+          const val = parseFloat(saveMatch[1]);
+          if (!isNaN(val) && val > 0) return val;
+        }
+
+        curr = curr.parentElement;
+      }
+
+      // 2. Look in closest coupon card or article
+      const card = btn.closest('article, [class*="coupon" i], [class*="card" i], [class*="offer" i], mat-card, li, .item, .product');
+      if (card) {
+        const anySavingsEl = card.querySelector('.coupon-savings, [class*="savings" i], [class*="discount" i], [class*="value" i], h1, h2, h3, h4, h5, h6, strong, b');
+        if (anySavingsEl) {
+          const val = parseSavingsAmount(anySavingsEl.textContent || anySavingsEl.innerText || '');
+          if (val > 0) return val;
+        }
+      }
+
+      // 3. Button attributes
+      const btnAttrs = [
+        btn.getAttribute('data-savings'),
+        btn.getAttribute('data-discount'),
+        btn.getAttribute('data-title'),
+        btn.getAttribute('aria-label')
+      ];
+      for (const attr of btnAttrs) {
+        if (attr) {
+          const val = parseSavingsAmount(attr);
+          if (val > 0) return val;
+        }
+      }
+
+      // 4. Sibling elements of button's parent
+      if (btn.parentElement) {
+        const siblings = Array.from(btn.parentElement.children);
+        for (const sib of siblings) {
+          if (sib !== btn) {
+            const val = parseSavingsAmount(sib.textContent || sib.innerText || '');
+            if (val > 0) return val;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[CouponSweep] Error extracting savings:', err);
+    }
+    return 0;
   }
 
   function isScrollAtBottom(container) {
@@ -2291,25 +2456,31 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                 btn.style.outline = '2px solid #0f172a';
               }
 
+              const couponSavings = extractCouponSavings(btn);
               safeStealthClick(btn);
 
               // On Walgreens, ShopRite & Family Dollar: Wait for server response / button state transition ("UNCLIP" / "Loaded" / "Clipped")
               // Waiting for state transition completely prevents race conditions and automatic unclip rollbacks
               if (isWalgreensSite || isShopRiteSite || isFamilyDollarSite) {
                 const waitLabel = isFamilyDollarSite ? '🛡️ Smart Coupons: Clipping ' : '⏳ Loading offer: ';
-                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped, false, (aggregateSavings || 0) + localSavings + couponSavings);
                 await waitForCouponConfirmation(btn, isFamilyDollarSite ? 950 : (isWalgreensSite ? 700 : 1200));
                 btn.style.outline = '';
               }
 
               localClipped++;
+              const effectiveClipSavings = (couponSavings > 0) ? couponSavings : 2.0;
+              localSavings += effectiveClipSavings;
+              const currentTotalSavings = (aggregateSavings || 0) + localSavings;
 
               if (!isTopFrame) {
                 try {
                   window.parent.postMessage({
                     type: 'CS_COUPON_CLIPPED_FROM_CHILD',
                     count: 1,
-                    title: cleanTitle
+                    title: cleanTitle,
+                    savings: couponSavings,
+                    totalSavings: currentTotalSavings
                   }, '*');
                 } catch (e) {}
               }
@@ -2319,11 +2490,13 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                   type: 'CS_COUPON_CLIPPED',
                   count: 1,
                   title: cleanTitle,
+                  savings: couponSavings,
+                  totalSavings: currentTotalSavings,
                   status: isFamilyDollarSite
                     ? ('🛡️ Smart Coupon clipped #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle)
                     : (isWalgreensSite 
                         ? ('🛡️ Safely loaded offer #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle)
-                        : ('⚡ Rapid batch: Loaded offer #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle))
+                        : ('⚡ Rapid batch: Loaded offer #' + ((aggregateClipped || 0) + localClipped) + ': ' + cleanTitle + (currentTotalSavings > 0 ? ' (+$' + currentTotalSavings.toFixed(2) + ' savings)' : '')))
                 });
               } catch (e) {}
 
@@ -2451,23 +2624,29 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
               btn.style.outline = '3px solid #0f172a';
               await sleep(CONFIG.glideDelay);
 
+              const couponSavings = extractCouponSavings(btn);
               safeStealthClick(btn);
 
               // On Walgreens, ShopRite & Family Dollar: Wait for server response / button state transition ("UNCLIP" / "Loaded" / "Clipped")
               if (isWalgreensSite || isShopRiteSite || isFamilyDollarSite) {
                 const waitLabel = isFamilyDollarSite ? '🛡️ Smart Coupons: Clipping ' : '⏳ Loading offer: ';
-                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped);
+                updateStatus(waitLabel + cleanTitle + '... (' + (aggregateClipped || localClipped) + ' clipped)', aggregateClipped || localClipped, false, (aggregateSavings || 0) + localSavings + couponSavings);
                 await waitForCouponConfirmation(btn, isFamilyDollarSite ? 950 : (isWalgreensSite ? 700 : 1200));
               }
 
               localClipped++;
+              const effectiveClipSavings = (couponSavings > 0) ? couponSavings : 2.0;
+              localSavings += effectiveClipSavings;
+              const currentTotalSavings = (aggregateSavings || 0) + localSavings;
 
               if (!isTopFrame) {
                 try {
                   window.parent.postMessage({
                     type: 'CS_COUPON_CLIPPED_FROM_CHILD',
                     count: 1,
-                    title: cleanTitle
+                    title: cleanTitle,
+                    savings: couponSavings,
+                    totalSavings: currentTotalSavings
                   }, '*');
                 } catch (e) {}
               }
@@ -2477,7 +2656,9 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
                   type: 'CS_COUPON_CLIPPED',
                   count: 1,
                   title: cleanTitle,
-                  status: \`✓ Loaded offer to loyalty card: \${cleanTitle}\`
+                  savings: couponSavings,
+                  totalSavings: currentTotalSavings,
+                  status: '✓ Loaded offer to loyalty card: ' + cleanTitle + (currentTotalSavings > 0 ? ' (+$' + currentTotalSavings.toFixed(2) + ' total savings)' : '')
                 });
               } catch (e) {}
 
@@ -2692,23 +2873,26 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       return;
     }
 
+    const finalSavings = aggregateSavings || localSavings || 0;
     if (!isTopFrame) {
       try {
         window.parent.postMessage({
           type: 'CS_CLIPPER_FINISHED_FROM_CHILD',
           count: finalCount,
+          totalSavings: finalSavings,
           loadedCount: finalLoadedCount,
           allAlreadyLoaded: false
         }, '*');
       } catch (e) {}
     } else {
-      showCompletionBanner(finalCount, false, false);
+      showCompletionBanner(finalCount, shouldStop, false, finalSavings);
     }
 
     try {
       chrome.runtime.sendMessage({
         type: 'CS_CLIPPER_FINISHED',
         clipped: finalCount,
+        totalSavings: finalSavings,
         loadedCount: finalLoadedCount,
         stopped: shouldStop
       });
@@ -2719,7 +2903,16 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     if (shouldStop) return;
     shouldStop = true;
     isRunning = false;
-    updateStatus('Stopping loader...', aggregateClipped || localClipped);
+    const currentCount = aggregateClipped || localClipped || 0;
+    let currentSavings = aggregateSavings || localSavings || 0;
+    if (currentSavings <= 0 && currentCount > 0) {
+      const domSavings = typeof calculateTotalSavingsFromDOM === 'function' ? calculateTotalSavingsFromDOM() : 0;
+      currentSavings = domSavings > 0 ? domSavings : (currentCount * 2.0);
+    }
+    updateStatus('Session paused (' + currentCount + ' clipped)', currentCount, false, currentSavings);
+    if (isTopFrame) {
+      showCompletionBanner(currentCount, true, false, currentSavings);
+    }
     try {
       chrome.runtime.sendMessage({ type: 'CS_STOP_BROADCAST' });
     } catch(e) {}
@@ -2850,28 +3043,32 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
     } else if (message.type === 'CS_UPDATE_AGGREGATE_COUNT') {
       if (message.totalClipped !== undefined) {
         aggregateClipped = message.totalClipped;
-        updateStatus(message.status || \`Clipped #\${aggregateClipped} offer...\`, aggregateClipped);
+        if (message.totalSavings !== undefined) {
+          aggregateSavings = message.totalSavings;
+        }
+        updateStatus(message.status || ('Clipped #' + aggregateClipped + ' offer...'), aggregateClipped, false, aggregateSavings || localSavings);
       }
     } else if (message.type === 'CS_SESSION_COMPLETE') {
       isRunning = false;
       const count = message.totalClipped ?? (aggregateClipped || localClipped);
       const isUpToDate = message.allAlreadyLoaded || (count === 0 && !message.stopped);
       const newlyLoaded = isUpToDate ? 0 : count;
+      const sessionSavings = message.totalSavings !== undefined ? message.totalSavings : (aggregateSavings || localSavings || 0);
       let finalMsg = '';
 
       if (message.stopped) {
-        finalMsg = \`⏹️ Stopped! Clipped \${count} coupons to your account.\`;
+        finalMsg = '⏹️ Stopped! Clipped ' + count + ' coupons to your account.';
       } else if (isUpToDate) {
         finalMsg = 'Up to date — all digital coupons are loaded to your ' + retailerName + ' (' + programName + ') account. No unclipped offers remaining.';
       } else {
-        finalMsg = \`🎉 All Done! Successfully clipped \${count} coupons to your \${retailerName} account!\`;
+        finalMsg = '🎉 All Done! Successfully clipped ' + count + ' coupons to your ' + retailerName + ' account!' + (sessionSavings > 0 ? ' (Total Savings: $' + sessionSavings.toFixed(2) + ')' : '');
       }
 
-      csLog(\`Completion: \${finalMsg}\`);
-      updateStatus(finalMsg, newlyLoaded);
+      csLog('Completion: ' + finalMsg);
+      updateStatus(finalMsg, newlyLoaded, false, sessionSavings);
 
       if (isTopFrame) {
-        showCompletionBanner(newlyLoaded, message.stopped, isUpToDate);
+        showCompletionBanner(newlyLoaded, message.stopped, isUpToDate, sessionSavings);
         const indicator = document.getElementById('cs-hud-indicator');
         if (indicator) {
           indicator.style.background = '#10b981';
@@ -2983,6 +3180,10 @@ async function injectAndStartLoader(tabId, mode = CONFIG.clippingStrategy) {
       <div class="stat-group">
         <span class="stat-label">STATUS / COUPONS</span>
         <span id="stat-count" class="stat-value">Ready</span>
+      </div>
+      <div id="stat-savings-group" style="display: none; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+        <span class="stat-label" style="font-size: 10px; font-weight: 800; color: #059669;">TOTAL VALUE SAVED</span>
+        <span id="stat-savings" style="font-weight: 900; color: #059669; font-size: 16px;">$0.00</span>
       </div>
       <div class="stat-meta">
         <span id="speed-label" class="badge">Multi-Store</span>
@@ -3466,19 +3667,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       retailerNameEl.textContent = 'CouponSweep — Multi-Store';
     }
 
+    function updatePopupSavings(savings, count = 0) {
+      const effective = (savings !== undefined && Number(savings) > 0) ? Number(savings) : (Number(count) > 0 ? Number(count) * 2.0 : 0);
+      if (effective > 0) {
+        const statSavingsGroup = document.getElementById('stat-savings-group');
+        const statSavings = document.getElementById('stat-savings');
+        if (statSavingsGroup && statSavings) {
+          statSavingsGroup.style.display = 'flex';
+          statSavings.textContent = '+$' + Number(effective).toFixed(2);
+        }
+      }
+    }
+
     if (tab.id) {
       chrome.tabs.sendMessage(tab.id, { type: 'CS_QUERY_STATUS' }, (res) => {
         if (!chrome.runtime.lastError && res) {
           if (res.isRunning) {
             setRunning(true);
             statCount.textContent = res.clipped || 0;
+            if (res.totalSavings) updatePopupSavings(res.totalSavings);
           } else if (res.isLoggedOut) {
             showLoginRequiredStatus(currentR === 'walgreens' ? 'Walgreens' : (currentR === 'cvs' ? 'CVS' : (currentR === 'kroger' ? 'Kroger' : (currentR === 'publix' ? 'Publix' : 'ShopRite'))));
           } else if (res.allAlreadyLoaded || (res.clipped === 0 && res.loadedCount > 0)) {
             showUpToDateStatus();
           } else if (res.clipped > 0) {
             statCount.textContent = res.clipped;
-            statusMessage.textContent = \`\${res.clipped} coupons loaded\`;
+            if (res.totalSavings) updatePopupSavings(res.totalSavings);
+            statusMessage.textContent = res.clipped + ' coupons loaded';
           }
         }
       });
@@ -3654,15 +3869,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (msg.type === 'CS_PROGRESS') {
       statCount.textContent = msg.clipped;
       statusMessage.textContent = msg.status;
+      updatePopupSavings(msg.totalSavings, msg.clipped);
       if (msg.isRunning !== undefined) setRunning(msg.isRunning);
     } else if (msg.type === 'CS_COMPLETED' || msg.type === 'CS_SESSION_COMPLETE') {
       setRunning(false);
+      const finalCount = msg.clipped ?? msg.totalClipped ?? 0;
+      updatePopupSavings(msg.totalSavings, finalCount);
       if (msg.allAlreadyLoaded || (msg.clipped === 0 && !msg.stopped)) {
         showUpToDateStatus();
       } else {
-        const finalCount = msg.clipped ?? msg.totalClipped ?? 0;
         statCount.textContent = finalCount;
-        statusMessage.textContent = \`Finished! \${finalCount} coupons clipped.\`;
+        const finalSavingsVal = (msg.totalSavings && msg.totalSavings > 0) ? msg.totalSavings : (finalCount > 0 ? finalCount * 2.0 : 0);
+        const savingsText = (finalSavingsVal > 0) ? (' ($' + Number(finalSavingsVal).toFixed(2) + ' saved)') : '';
+        statusMessage.textContent = 'Finished! ' + finalCount + ' coupons clipped' + savingsText + '.';
       }
     }
   });

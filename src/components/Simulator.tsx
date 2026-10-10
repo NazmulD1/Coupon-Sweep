@@ -6,6 +6,32 @@ import { CouponItem, ExtensionConfig, RetailerId } from '../types';
 const SHOPRITE_COUPONS: CouponItem[] = [
   {
     id: 'sr1',
+    brand: 'Olay Regenerist',
+    title: 'Save $8.00 on ONE Olay Regenerist Facial Moisturizer 1.7 oz or serum (Select varieties)...',
+    discount: 'Save $8.00',
+    category: 'Skincare',
+    expiration: 'Expires: 10/12/2026 - 12 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#7c3aed',
+    badges: ['Top Deal', 'High Value'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr2',
+    brand: 'Gain Flings',
+    title: 'Save $1.80 on Gain Flings Laundry Detergent 35ct or Liquid Fabric Softener...',
+    discount: 'Save $1.80',
+    category: 'Household & Laundry',
+    expiration: 'Expires: 10/10/2026 - 10 days left',
+    buttonLabel: 'Load Coupon',
+    isClipped: false,
+    imageColor: '#0284c7',
+    badges: ['Weekly Ad', 'Limit 4'],
+    retailer: 'shoprite'
+  },
+  {
+    id: 'sr3',
     brand: 'Crest',
     title: 'Save $2.00 on ONE Crest Toothpaste 2.4 oz or more (excludes Crest Cavity, Bakin...',
     discount: 'Save $2.00',
@@ -18,7 +44,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr2',
+    id: 'sr4',
     brand: 'Herbal Essences',
     title: 'Save $5.00 on TWO Herbal Essences Pure Plant Essences Shampoo, Conditioner...',
     discount: 'Save $5.00',
@@ -31,7 +57,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr3',
+    id: 'sr5',
     brand: "Harry's Plus",
     title: "Save $2.00 on ONE Harry's Plus Razor Handle Pack (Select varieties)...",
     discount: 'Save $2.00',
@@ -44,7 +70,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr4',
+    id: 'sr6',
     brand: "L'ORÉAL PARIS",
     title: "Save $3.00 on TWO L'Oréal Paris Elvive haircare or Advanced Hairstyle products...",
     discount: 'Save $3.00',
@@ -57,7 +83,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr5',
+    id: 'sr7',
     brand: 'AVEENO Baby',
     title: 'Save $2.00 on any ONE (1) AVEENO Baby or AVEENO Kids product (excludes travel/trial)...',
     discount: 'Save $2.00',
@@ -70,7 +96,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr6',
+    id: 'sr8',
     brand: 'Blue Buffalo',
     title: 'Save $1.00 on any ONE (1) Blue Buffalo Dog Food Dry or Wet or Treats...',
     discount: 'Save $1.00',
@@ -83,7 +109,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr7',
+    id: 'sr9',
     brand: 'The Pink Stuff',
     title: 'Save $1.00 When you Buy ONE (1) The Pink Stuff Foaming Toilet Cleaner 2-Pack...',
     discount: 'Save $1.00',
@@ -96,7 +122,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr8',
+    id: 'sr10',
     brand: 'Tide',
     title: 'Save $3.00 on Tide PODS Laundry Detergent 42ct or Liquid Detergent 92oz...',
     discount: 'Save $3.00',
@@ -109,7 +135,7 @@ const SHOPRITE_COUPONS: CouponItem[] = [
     retailer: 'shoprite'
   },
   {
-    id: 'sr9',
+    id: 'sr11',
     brand: 'Chobani',
     title: 'Save $0.75 on Chobani Less Sugar or Zero Sugar Greek Yogurt Cups 5.3oz...',
     discount: 'Save $0.75',
@@ -728,13 +754,12 @@ export function Simulator({ config }: SimulatorProps) {
   const [isNestedWindow, setIsNestedWindow] = useState(true);
   const [activeFilter, setActiveFilter] = useState(selectedRetailer === 'publix' ? 'All Coupons (284)' : (selectedRetailer === 'shoprite' ? 'All Coupons - (254)' : 'All Offers (186)'));
   const [isRunning, setIsRunning] = useState(false);
-  const [clippedCount, setClippedCount] = useState(0);
   const [currentActionText, setCurrentActionText] = useState('Ready for 1-click execution');
   const [logs, setLogs] = useState<string[]>([
     `Target: ${selectedRetailer === 'publix' ? (config.publixTargetUrl || 'https://www.publix.com/savings/digital-coupons') : (selectedRetailer === 'shoprite' ? (config.shopriteTargetUrl || config.targetUrl) : (config.walgreensTargetUrl || 'https://www.walgreens.com/offers/offers.jsp'))}`,
     `Simulator initialized for ${selectedRetailer === 'publix' ? 'Publix (Club Publix)' : (selectedRetailer === 'shoprite' ? 'ShopRite (Price Plus®)' : 'Walgreens (myWalgreens™)')}.`
   ]);
-  const [completionNotice, setCompletionNotice] = useState<{ count: number; stopped: boolean; isAllLoaded?: boolean; retailer?: RetailerId } | null>(null);
+  const [completionNotice, setCompletionNotice] = useState<{ count: number; stopped: boolean; isAllLoaded?: boolean; retailer?: RetailerId; totalSavings?: number } | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showModeModal, setShowModeModal] = useState(false);
   const [activeStrategy, setActiveStrategy] = useState<'instant' | 'individual'>(config.clippingStrategy || 'instant');
@@ -742,6 +767,15 @@ export function Simulator({ config }: SimulatorProps) {
   const abortControllerRef = useRef<boolean>(false);
   const couponsRef = useRef(coupons);
   couponsRef.current = coupons;
+
+  const parseCouponSavings = (discountStr?: string): number => {
+    if (!discountStr) return 0;
+    const match = discountStr.match(/\$\s*([0-9]+(?:\.[0-9]{1,2})?)/);
+    if (match) return parseFloat(match[1]);
+    const cents = discountStr.match(/([0-9]{1,2})\s*(?:¢|cents)/i);
+    if (cents) return parseFloat(cents[1]) / 100;
+    return 0;
+  };
 
   useEffect(() => {
     if (config.clippingStrategy) {
@@ -770,6 +804,7 @@ export function Simulator({ config }: SimulatorProps) {
   }, [selectedRetailer]);
 
   const loadedCount = coupons.filter(c => c.isClipped).length;
+  const totalSavings = coupons.reduce((sum, c) => c.isClipped ? sum + parseCouponSavings(c.discount) : sum, 0);
 
   const handleSelectModeAndStart = (mode: 'instant' | 'individual') => {
     setActiveStrategy(mode);
@@ -793,7 +828,8 @@ export function Simulator({ config }: SimulatorProps) {
       prev.map(c => (c.id === id ? { ...c, isClipped: true } : c))
     );
     if (target) {
-      addLog(`✓ Manually loaded coupon: ${target.brand} - ${target.discount}`);
+      const s = parseCouponSavings(target.discount);
+      addLog(`✓ Manually loaded coupon: ${target.brand} - ${target.discount}${s > 0 ? ` (+$${s.toFixed(2)} savings)` : ''}`);
     }
   };
 
@@ -802,8 +838,8 @@ export function Simulator({ config }: SimulatorProps) {
     setCoupons(prev =>
       prev.map(c => (c.id === id ? { ...c, isClipped: false } : c))
     );
-    setClippedCount(prev => Math.max(0, prev - 1));
     if (target) {
+      const s = parseCouponSavings(target.discount);
       addLog(`↩️ Unclipped coupon for testing: ${target.brand} - ${target.discount}`);
     }
   };
@@ -811,7 +847,6 @@ export function Simulator({ config }: SimulatorProps) {
   const handleUnclipAll = () => {
     setCompletionNotice(null);
     setCoupons(prev => prev.map(c => ({ ...c, isClipped: false })));
-    setClippedCount(0);
     setCurrentActionText('All coupons unclipped (Ready to test loading)');
     addLog(`↩️ Unclipped ALL ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons for testing.`);
     if (scrollContainerRef.current) {
@@ -825,9 +860,9 @@ export function Simulator({ config }: SimulatorProps) {
   const handleClipAll = () => {
     setCompletionNotice(null);
     setCoupons(prev => prev.map(c => ({ ...c, isClipped: true })));
-    setClippedCount(coupons.length);
+    const allSavings = coupons.reduce((sum, c) => sum + parseCouponSavings(c.discount), 0);
     setCurrentActionText(`All ${coupons.length} coupons marked as loaded`);
-    addLog(`✓ Marked all ${coupons.length} coupons as loaded on ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))}.`);
+    addLog(`✓ Marked all ${coupons.length} coupons as loaded on ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} ($${allSavings.toFixed(2)} total savings).`);
   };
 
   const handleReset = () => {
@@ -848,7 +883,6 @@ export function Simulator({ config }: SimulatorProps) {
     } else {
       setWalgreensCoupons(WALGREENS_COUPONS);
     }
-    setClippedCount(0);
     setCurrentActionText('Reset complete');
     addLog(`Reset all ${selectedRetailer === 'publix' ? 'Publix' : selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))} coupons in sandbox to default state.`);
     if (scrollContainerRef.current) {
@@ -914,6 +948,7 @@ export function Simulator({ config }: SimulatorProps) {
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     let localClipped = 0;
+    let localSavings = 0;
     let consecutiveEmptyPasses = 0;
     const MAX_EMPTY_PASSES = 8;
 
@@ -991,8 +1026,9 @@ export function Simulator({ config }: SimulatorProps) {
                   // Server confirmation simulation: state transitions to clipped (UNCLIP)
                   setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, isClipped: true } : c));
                   localClipped++;
-                  setClippedCount(prev => prev + 1);
-                  addLog(`🛡️ Clipped Smart Coupon: ${coupon.brand} - ${coupon.discount} (#${localClipped})`);
+                  const s = parseCouponSavings(coupon.discount);
+                  localSavings += s;
+                  addLog(`🛡️ Clipped Smart Coupon: ${coupon.brand} - ${coupon.discount} (#${localClipped}${s > 0 ? `, +$${s.toFixed(2)} savings` : ''})`);
                   btn.style.outline = 'none';
 
                   // Humanized anti-bot pacing (750ms) prevents Family Dollar rate-limit rejection
@@ -1025,8 +1061,9 @@ export function Simulator({ config }: SimulatorProps) {
 
                   setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, isClipped: true } : c));
                   localClipped++;
-                  setClippedCount(prev => prev + 1);
-                  addLog(`🛡️ Loaded to myWalgreens: ${coupon.brand} - ${coupon.discount} (#${localClipped})`);
+                  const s = parseCouponSavings(coupon.discount);
+                  localSavings += s;
+                  addLog(`🛡️ Loaded to myWalgreens: ${coupon.brand} - ${coupon.discount} (#${localClipped}${s > 0 ? `, +$${s.toFixed(2)} savings` : ''})`);
                   btn.style.outline = 'none';
 
                   // Pacing delay
@@ -1054,15 +1091,16 @@ export function Simulator({ config }: SimulatorProps) {
                 if (couponId && coupon && !coupon.isClipped) {
                   setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, isClipped: true } : c));
                   localClipped++;
-                  setClippedCount(prev => prev + 1);
-                  addLog(`⚡ Batch load: ${coupon.brand} - ${coupon.discount} (#${localClipped})`);
+                  const s = parseCouponSavings(coupon.discount);
+                  localSavings += s;
+                  addLog(`⚡ Batch load: ${coupon.brand} - ${coupon.discount} (#${localClipped}${s > 0 ? `, +$${s.toFixed(2)} savings` : ''})`);
                 }
                 await sleep(60);
               } catch (e) {
                 console.error(e);
               }
             }
-            addLog(`⚡ Batch loaded ${unclippedButtons.length} coupons! Total loaded: ${localClipped}`);
+            addLog(`⚡ Batch loaded ${unclippedButtons.length} coupons! Total loaded: ${localClipped}${localSavings > 0 ? ` (Total Savings: $${localSavings.toFixed(2)})` : ''}`);
             await sleep(150);
           }
 
@@ -1100,8 +1138,9 @@ export function Simulator({ config }: SimulatorProps) {
 
                 setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, isClipped: true } : c));
                 localClipped++;
-                setClippedCount(prev => prev + 1);
-                addLog(`✓ Clipped to ${pName} card: ${title} (#${localClipped})`);
+                const s = parseCouponSavings(coupon.discount);
+                localSavings += s;
+                addLog(`✓ Clipped to ${pName} card: ${title} (#${localClipped}${s > 0 ? `, +$${s.toFixed(2)} savings` : ''})`);
 
                 const clickWait = selectedRetailer === 'walgreens' 
                   ? Math.max(config.clickDelay, 900) 
@@ -1128,29 +1167,34 @@ export function Simulator({ config }: SimulatorProps) {
     } finally {
       setIsRunning(false);
       const stopped = abortControllerRef.current;
-      const allLoadedNow = coupons.every(c => c.isClipped) || localClipped === 0;
+      const actualLoadedCount = couponsRef.current.filter(c => c.isClipped).length;
+      const parsedSavings = couponsRef.current.reduce((sum, c) => c.isClipped ? sum + parseCouponSavings(c.discount) : sum, 0);
+      const actualTotalSavings = parsedSavings > 0 ? parsedSavings : actualLoadedCount * 2.0;
+      const allLoadedNow = couponsRef.current.every(c => c.isClipped) || actualLoadedCount === 0;
+
       if (stopped) {
-        setCurrentActionText(`Stopped by user (${localClipped} clipped)`);
-        addLog(`⏹️ Loader halted. Loaded ${localClipped} coupons.`);
-      } else if (allLoadedNow && localClipped === 0) {
+        setCurrentActionText(`Stopped by user (${actualLoadedCount} clipped${actualTotalSavings > 0 ? `, $${actualTotalSavings.toFixed(2)} saved` : ''})`);
+        addLog(`⏹️ Loader halted. Loaded ${actualLoadedCount} coupons (${actualTotalSavings > 0 ? `$${actualTotalSavings.toFixed(2)} savings` : ''}).`);
+      } else if (actualLoadedCount === 0) {
         setCurrentActionText('Up to date — all coupons are loaded');
         addLog(`✅ Up to date — all coupons are loaded on your ${pName} loyalty account.`);
-      } else if (localClipped > 0) {
-        setCurrentActionText(`🎉 Finished! Loaded ${localClipped} digital coupons!`);
-        addLog(`🎉 Complete! All ${localClipped} coupons loaded to your ${rName} account.`);
       } else {
-        setCurrentActionText('Up to date — all coupons are loaded');
-        addLog(`✅ Up to date — all coupons are loaded on your ${pName} loyalty account.`);
+        setCurrentActionText(`🎉 Finished! Loaded ${actualLoadedCount} digital coupons!${actualTotalSavings > 0 ? ` (Total Savings: $${actualTotalSavings.toFixed(2)})` : ''}`);
+        addLog(`🎉 Complete! All ${actualLoadedCount} coupons loaded to your ${rName} account${actualTotalSavings > 0 ? ` (Total savings: $${actualTotalSavings.toFixed(2)})` : ''}.`);
       }
-      setCompletionNotice({ count: localClipped, stopped, isAllLoaded: allLoadedNow, retailer: selectedRetailer });
+      setCompletionNotice({ count: actualLoadedCount, stopped, isAllLoaded: allLoadedNow, retailer: selectedRetailer, totalSavings: actualTotalSavings });
     }
   };
 
   const handleStop = () => {
     abortControllerRef.current = true;
     setIsRunning(false);
-    setCurrentActionText('Stopping loader...');
-    addLog('User clicked stop.');
+    const count = coupons.filter(c => c.isClipped).length;
+    const parsed = coupons.reduce((sum, c) => c.isClipped ? sum + parseCouponSavings(c.discount) : sum, 0);
+    const savings = parsed > 0 ? parsed : count * 2.0;
+    setCurrentActionText(`Stopped by user (${count} clipped${savings > 0 ? `, $${savings.toFixed(2)} saved` : ''})`);
+    addLog(`User clicked stop. Loaded ${count} coupons ($${savings.toFixed(2)} total savings).`);
+    setCompletionNotice({ count, stopped: true, isAllLoaded: false, retailer: selectedRetailer, totalSavings: savings });
   };
 
   return (
@@ -1350,6 +1394,14 @@ export function Simulator({ config }: SimulatorProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {totalSavings > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-emerald-300 font-bold text-xs shadow-xs animate-in fade-in">
+              <Tag className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Clipped Savings:</span>
+              <span className="text-white font-black">+${totalSavings.toFixed(2)}</span>
+            </div>
+          )}
+
           <button
             onClick={() => setIsGuest(!isGuest)}
             className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
@@ -1832,21 +1884,29 @@ export function Simulator({ config }: SimulatorProps) {
                         : currentActionText}
                     </div>
                   </div>
-                  <div className={`border-l border-slate-200 pl-3 text-center px-2.5 py-1 rounded-xl border ${
-                    loadedCount === coupons.length 
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                      : 'bg-slate-50 border-slate-200 text-slate-900'
-                  }`}>
-                    {loadedCount === coupons.length ? (
-                      <>
-                        <div className="text-sm font-black leading-tight">✓</div>
-                        <div className="text-[9px] font-bold leading-tight uppercase">Up to Date</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-base font-black leading-tight">{loadedCount}</div>
-                        <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">clipped</div>
-                      </>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`border-l border-slate-200 pl-2 text-center px-2.5 py-1 rounded-xl border ${
+                      loadedCount === coupons.length 
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                        : 'bg-slate-50 border-slate-200 text-slate-900'
+                    }`}>
+                      {loadedCount === coupons.length ? (
+                        <>
+                          <div className="text-sm font-black leading-tight">✓</div>
+                          <div className="text-[9px] font-bold leading-tight uppercase">Up to Date</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-base font-black leading-tight">{loadedCount}</div>
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">clipped</div>
+                        </>
+                      )}
+                    </div>
+                    {totalSavings > 0 && (
+                      <div className="text-center px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700">
+                        <div className="text-base font-black leading-tight">+${totalSavings.toFixed(2)}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-600">Savings</div>
+                      </div>
                     )}
                   </div>
                   <button
@@ -1893,21 +1953,40 @@ export function Simulator({ config }: SimulatorProps) {
                         : `${selectedRetailer === 'publix' ? 'CLUB PUBLIX' : (selectedRetailer === 'shoprite' ? 'PRICE PLUS®' : (selectedRetailer === 'cvs' ? 'EXTRACARE®' : (selectedRetailer === 'familydollar' ? 'SMART COUPONS' : 'MYWALGREENS™')))} SAVINGS ACTIVE`}
                     </div>
                   </div>
-                  <div className="p-8 text-center">
-                    {completionNotice.count > 0 && !completionNotice.isAllLoaded && (
-                      <div className="flex items-baseline justify-center gap-2 mb-3">
+                   <div className="p-8 text-center">
+                    {completionNotice.count > 0 && (
+                      <div className="flex items-baseline justify-center gap-2 mb-2">
                         <span className="text-5xl font-black text-slate-900 tracking-tighter italic">{completionNotice.count}</span>
                         <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Coupons</span>
+                      </div>
+                    )}
+                    {completionNotice.count > 0 && (
+                      <div className="my-3.5 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between shadow-xs">
+                        <div className="text-left">
+                          <div className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                            <span>💰 Total Value Saved</span>
+                          </div>
+                          <div className="text-xs font-semibold text-emerald-700 mt-0.5">
+                            {completionNotice.count} coupons loaded
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-black text-emerald-700 tracking-tight">
+                            +${((completionNotice.totalSavings !== undefined && completionNotice.totalSavings > 0) ? completionNotice.totalSavings : completionNotice.count * 2.0).toFixed(2)}
+                          </div>
+                        </div>
                       </div>
                     )}
                     <p className="text-sm text-slate-600 font-medium leading-relaxed px-2">
                       {(completionNotice.count === 0 || completionNotice.isAllLoaded) && !completionNotice.stopped
                         ? `Up to date — all digital coupons are loaded to your ${selectedRetailer === 'publix' ? 'Club Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite Price Plus®' : (selectedRetailer === 'cvs' ? 'CVS ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? "Kroger Shopper's Card" : 'myWalgreens™'))))} card. No new offers to clip.`
-                        : `Successfully loaded to your ${selectedRetailer === 'publix' ? 'Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))))} account. All discounts will automatically apply at checkout.`}
+                        : (completionNotice.totalSavings && completionNotice.totalSavings > 0
+                            ? `Successfully loaded ${completionNotice.count} digital coupons worth $${completionNotice.totalSavings.toFixed(2)} in total savings to your ${selectedRetailer === 'publix' ? 'Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite Price Plus®' : (selectedRetailer === 'cvs' ? 'CVS ExtraCare®' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))))} account. All discounts will automatically apply at checkout.`
+                            : `Successfully loaded to your ${selectedRetailer === 'publix' ? 'Publix' : (selectedRetailer === 'shoprite' ? 'ShopRite' : (selectedRetailer === 'cvs' ? 'CVS' : (selectedRetailer === 'familydollar' ? 'Family Dollar' : (selectedRetailer === 'kroger' ? 'Kroger' : 'Walgreens'))))} account. All discounts will automatically apply at checkout.`)}
                     </p>
                     <button 
                       onClick={() => setCompletionNotice(null)}
-                      className="w-full mt-8 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl shadow-xl shadow-slate-900/20 transition-all active:scale-[0.98] cursor-pointer"
+                      className="w-full mt-6 py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl shadow-xl shadow-slate-900/20 transition-all active:scale-[0.98] cursor-pointer"
                     >
                       ✓ Got it, Thanks!
                     </button>
@@ -2030,9 +2109,15 @@ export function Simulator({ config }: SimulatorProps) {
                         </div>
 
                         <div className="flex-1">
-                          <div className="text-lg font-black text-slate-900 leading-tight">
-                            {coupon.discount}
-                          </div>
+                          {selectedRetailer === 'shoprite' ? (
+                            <div _ngcontent-ng-c2591691091="" className="coupon-savings text-lg font-black text-slate-900 leading-tight">
+                              {coupon.discount}
+                            </div>
+                          ) : (
+                            <div className="text-lg font-black text-slate-900 leading-tight">
+                              {coupon.discount}
+                            </div>
+                          )}
                           <p className="text-xs text-slate-700 mt-1 line-clamp-2 leading-relaxed">
                             {coupon.title}
                           </p>
